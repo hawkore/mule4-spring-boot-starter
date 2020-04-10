@@ -1,0 +1,1 @@
+To deploy on production, copy here you Mule EE license `muleLicenseKey.lic` file.

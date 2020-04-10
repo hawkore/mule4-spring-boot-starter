@@ -1,0 +1,46 @@
+version: '3.3'
+
+services:
+
+  spring-admin-server:
+    image: docker.hawkore.com/spring-boot-admin-server:latest
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    ports:
+      - "8882:8882"
+    networks:
+      hknet:
+    healthcheck:
+      test: curl --fail -s http://localhost:8882 || exit 1
+      interval: 30s
+      timeout: 2m
+      retries: 5
+
+  mule-runtime:
+    image: docker.hawkore.com/spring-boot-mule4-runtime-ce:latest
+    environment:
+      - "USER_JVM_OPTS=-Dspring.boot.admin.client.url=http://spring-admin-server:8882 -Dmule.cleanStartup=true -Dmule.apps=file:./test-app.jar"
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    ports:
+      # Mule Deployment services
+      - "8880:8880"
+      # http port (exposed by test-app Mule application)
+      - "8081:8081"
+    networks:
+      hknet:
+    volumes:
+      - ./test-mule-app/target/test-mule-app-1.0.0-mule-application.jar:/opt/mule/test-app.jar:ro
+    healthcheck:
+      test: curl --fail -s http://localhost:8888/manage/actuator/health || exit 1
+      interval: 30s
+      timeout: 2m
+      retries: 5
+
+networks:
+  hknet:
+

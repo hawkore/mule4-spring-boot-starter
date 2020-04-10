@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+  xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+  <flow name="fixed-scheduler" doc:id="25688adc-3b59-43ba-acd3-7084e1e438a5">
+    <scheduler doc:name="Scheduler" doc:id="997fda32-fe01-4283-bce0-1f71d516a755">
+      <scheduling-strategy>
+        <fixed-frequency frequency="5000" />
+      </scheduling-strategy>
+    </scheduler>
+    <logger level="INFO" doc:name="Logger" doc:id="07c770d1-41f7-45a3-8382-4d75a88e51e5"
+      message="Hi! I'm a scheduled job running every 5 seconds" />
+  </flow>
+</mule>

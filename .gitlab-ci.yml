@@ -1,0 +1,4 @@
+# Internal Hawkore CI
+include:
+  - remote: 'https://gitlab.hawkore.com/public-projects/gitlab-ci-templates/-/raw/master/mule4-spring-boot-stater.gitlab-ci.yml'
+

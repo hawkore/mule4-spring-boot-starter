@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!-- Ignite configuration for a mule node -->
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:util="http://www.springframework.org/schema/util" xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/util
+        http://www.springframework.org/schema/util/spring-util.xsd">
+
+  <!-- Imports default Ignite configuration -->
+  <import resource="default-ignite-config.xml" />
+
+  <bean id="ignite-mule-grid" parent="default-mule-grid-config">
+    <property name="gridName" value="local-test-ignite-mule-grid" />
+    <property name="clientMode" value="false" />
+
+    <!-- Explicitly configure TCP discovery SPI for local testing. -->
+    <property name="discoverySpi">
+      <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+        <property name="localAddress" value="127.0.0.1" />
+        <property name="localPort" value="47500" />
+        <property name="localPortRange" value="5" />
+        <property name="ipFinder">
+          <bean class="com.hawkore.ignite.spi.discovery.tcp.ipfinder.test.IpFinder">
+            <property name="shared" value="false" />
+            <property name="addresses" value="127.0.0.1:47500..47504" />
+          </bean>
+        </property>
+      </bean>
+    </property>
+  </bean>
+
+</beans>
