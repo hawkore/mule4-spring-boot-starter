@@ -24,6 +24,14 @@ limitations under the License.
   <name>Spring Boot Starter for Mule 4</name>
   <description>A 'Bootiful' approach to run Mule 4 embedded into a Spring Boot application</description>
 
+  <url>https://github.com/hawkore/mule4-spring-boot-starter</url>
+
+  <scm>
+    <connection>scm:git:git://github.com/hawkore/mule4-spring-boot-starter.git</connection>
+    <developerConnection>scm:git:ssh://github.com:hawkore/mule4-spring-boot-starter.git</developerConnection>
+    <url>https://github.com/hawkore/mule4-spring-boot-starter/tree/master</url>
+  </scm>
+
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
@@ -232,6 +240,9 @@ limitations under the License.
           <updatePomFile>true</updatePomFile>
           <embedBuildProfileDependencies>true</embedBuildProfileDependencies>
           <pomElements>
+            <name>resolve</name>
+            <description>resolve</description>
+            <scm>resolve</scm>
             <repositories>resolve</repositories>
             <developers>resolve</developers>
             <organization>resolve</organization>
