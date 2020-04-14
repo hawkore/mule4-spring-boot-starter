@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <groupId>org.hawkore.springframework.boot</groupId>
     <artifactId>mule4-spring-boot-starter</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
