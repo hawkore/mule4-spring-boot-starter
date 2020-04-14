@@ -16,14 +16,13 @@
 package org.hawkore.springframework.boot.mule.container;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hawkore.springframework.boot.mule.config.MuleConfigProperties;
 import org.hawkore.springframework.boot.mule.controller.MuleRuntimeDeploymentServices;
 import org.hawkore.springframework.boot.mule.controller.dto.ErrorMessage;
 import org.hawkore.springframework.boot.mule.exception.DeployArtifactException;
 import org.hawkore.springframework.boot.mule.health.MuleRuntimeHealthIndicator;
 import org.hawkore.springframework.boot.mule.test.main.SpringBootEmbeddedMuleRuntimeApp;
 import org.hawkore.springframework.boot.mule.test.ut.AbstractSpringTest;
-import org.junit.After;
+import org.hawkore.springframework.boot.mule.utils.StorageUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
 @TestPropertySource({"classpath:application-test.properties", "classpath:application-test-patches.properties"})
-@SpringBootTest(classes = {MuleConfigProperties.class, SpringBootEmbeddedMuleRuntimeApp.class})
+@SpringBootTest(classes = {SpringBootEmbeddedMuleRuntimeApp.class})
 public class SpringBootMule4ShutdownTestCases extends AbstractSpringTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringBootMule4ShutdownTestCases.class);
@@ -73,18 +72,6 @@ public class SpringBootMule4ShutdownTestCases extends AbstractSpringTest {
     public void before() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(deploymentServices).setMessageConverters(jacksonMessageConverter)
                            .build();
-    }
-
-    @After
-    public void after() {
-
-    }
-
-    @Test
-    public void muleRuntimeMultipleStarts() throws Exception {
-        // try start an already started Mule container, ensure started
-        container.start();
-        Assert.assertFalse(container.start());
     }
 
     @Test
@@ -144,7 +131,14 @@ public class SpringBootMule4ShutdownTestCases extends AbstractSpringTest {
 
     @Test
     public void executeWithinClassLoaderNullCLOK() {
-        container.executeWithinClassLoader(null, () -> LOGGER.debug("Runnable task"));
+        Exception ex = null;
+        try {
+            container.executeWithinClassLoader(null, () -> LOGGER.debug("Runnable task"));
+        } catch (Exception e) {
+            ex = e;
+            LOGGER.error("An exception occurs", e);
+        }
+        Assert.assertNull("An exception occurs", ex);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -154,13 +148,27 @@ public class SpringBootMule4ShutdownTestCases extends AbstractSpringTest {
 
     @Test
     public void executeWithinClassLoaderOK() {
-        container.executeWithinClassLoader(this.getClass().getClassLoader(), () -> LOGGER.debug("Runable task"));
+        Exception ex = null;
+        try {
+            container.executeWithinClassLoader(this.getClass().getClassLoader(), () -> LOGGER.debug("Runable task"));
+        } catch (Exception e) {
+            ex = e;
+            LOGGER.error("An exception occurs", e);
+        }
+        Assert.assertNull("An exception occurs", ex);
     }
 
     @Test
     public void cleanUpFolder() {
-        // should not fail, just log wanning
-        container.cleanUpFolder(null);
+        Exception ex = null;
+        try {
+            // should not fail, just log wanning
+            StorageUtils.cleanUpFolder(null);
+        } catch (Exception e) {
+            ex = e;
+            LOGGER.error("An exception occurs", e);
+        }
+        Assert.assertNull("An exception occurs", ex);
     }
 
 }

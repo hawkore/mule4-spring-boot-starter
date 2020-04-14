@@ -45,7 +45,7 @@ import org.springframework.web.multipart.MultipartFile;
 @ConditionalOnWebApplication
 public class MuleRuntimeDeploymentServices {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final Logger LOGGER = LoggerFactory.getLogger(MuleRuntimeDeploymentServices.class);
     @Autowired
     private SpringMuleContainer muleContainer;
 
@@ -59,7 +59,7 @@ public class MuleRuntimeDeploymentServices {
         try {
             return ResponseEntity.ok(muleContainer.getDomains());
         } catch (Exception e) {
-            logger.error("Error retrieving domains", e);
+            LOGGER.error("Error retrieving domains", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                        .body(new ErrorMessage().setMessage(e.getMessage()));
         }
@@ -75,7 +75,7 @@ public class MuleRuntimeDeploymentServices {
         try {
             return ResponseEntity.ok(muleContainer.getApplications());
         } catch (Exception e) {
-            logger.error("Error retrieving applications", e);
+            LOGGER.error("Error retrieving applications", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                        .body(new ErrorMessage().setMessage(e.getMessage()));
         }
@@ -106,7 +106,7 @@ public class MuleRuntimeDeploymentServices {
                 .deployApplication(artifact, lazyInitializationEnabled, xmlValidationsEnabled, lazyConnectionsEnabled);
             return ResponseEntity.ok(muleContainer.getApplications());
         } catch (Exception e) {
-            logger.error("Error deploying application", e);
+            LOGGER.error("Error deploying application", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                        .body(new ErrorMessage().setMessage(e.getMessage()));
         }
@@ -137,7 +137,7 @@ public class MuleRuntimeDeploymentServices {
                 .deployDomain(artifact, lazyInitializationEnabled, xmlValidationsEnabled, lazyConnectionsEnabled);
             return ResponseEntity.ok(muleContainer.getDomains());
         } catch (Exception e) {
-            logger.error("Error deploying domain", e);
+            LOGGER.error("Error deploying domain", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                        .body(new ErrorMessage().setMessage(e.getMessage()));
         }
@@ -156,7 +156,7 @@ public class MuleRuntimeDeploymentServices {
             muleContainer.undeployApplication(app);
             return ResponseEntity.ok(muleContainer.getApplications());
         } catch (Exception e) {
-            logger.error("Error un-deploying application", e);
+            LOGGER.error("Error un-deploying application", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                        .body(new ErrorMessage().setMessage(e.getMessage()));
         }
@@ -175,7 +175,7 @@ public class MuleRuntimeDeploymentServices {
             muleContainer.undeployDomain(domain);
             return ResponseEntity.ok(muleContainer.getDomains());
         } catch (Exception e) {
-            logger.error("Error un-deploying domain", e);
+            LOGGER.error("Error un-deploying domain", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                        .body(new ErrorMessage().setMessage(e.getMessage()));
         }

@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <groupId>org.hawkore.springframework.boot</groupId>
     <artifactId>mule4-spring-boot-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -30,6 +30,7 @@ limitations under the License.
   <name>Spring Boot Starter for Mule 4 EE</name>
 
   <properties>
+    <gpg.skip>false</gpg.skip>
     <license.file>../../LICENSE</license.file>
   </properties>
 

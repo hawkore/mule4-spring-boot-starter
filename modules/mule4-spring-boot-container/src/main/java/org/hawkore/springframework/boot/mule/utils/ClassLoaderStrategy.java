@@ -30,7 +30,7 @@ public interface ClassLoaderStrategy {
      * Returns the class if the classloader is able to load it, null in other case
      *
      * @param cl
-     *     the cl
+     *     the classLoader
      * @param className
      *     the class name
      * @return class
@@ -38,10 +38,10 @@ public interface ClassLoaderStrategy {
     Class findClass(ClassLoader cl, String className);
 
     /**
-     * Find resource url.
+     * Find resource.
      *
      * @param cl
-     *     the cl
+     *     the classLoader
      * @param name
      *     the name
      * @return the url
@@ -49,10 +49,10 @@ public interface ClassLoaderStrategy {
     URL findResource(ClassLoader cl, String name);
 
     /**
-     * Find resources set.
+     * Find resources.
      *
      * @param cl
-     *     the cl
+     *     the classLoader
      * @param name
      *     the name
      * @return the set

@@ -16,7 +16,7 @@
 package org.hawkore.springframework.boot.mule.exception;
 
 /**
- * DeployArtifactException exception.
+ * DeployArtifactException.
  *
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */

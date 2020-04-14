@@ -51,15 +51,16 @@ public class MuleRuntimeHealthIndicator extends AbstractHealthIndicator {
     @Override
     protected void doHealthCheck(Health.Builder builder) throws Exception {
         try {
+            boolean failed = muleContainer.getApplications().stream().anyMatch(a -> !a.isDeployed()) ||
+                                 //domains
+                                 muleContainer.getDomains().stream().anyMatch(a -> !a.isDeployed());
 
-            boolean unDeployedArtifacts = muleContainer.getApplications().stream().anyMatch(a -> !a.isDeployed()) ||
-                                              // domains
-                                              muleContainer.getDomains().stream().anyMatch(a -> !a.isDeployed());
-            if (unDeployedArtifacts) {
+            if (failed) {
                 builder.outOfService();
             } else {
                 builder.up();
             }
+
             builder.withDetail("Version:", MuleManifest.getProductName() + " v" + MuleManifest.getProductVersion());
             builder.withDetail("Build:", MuleManifest.getBuildNumber());
 
@@ -69,8 +70,7 @@ public class MuleRuntimeHealthIndicator extends AbstractHealthIndicator {
             muleContainer.getApplications().stream()
                 .forEach(a -> builder.withDetail("APP: " + a.getName(), a.getStatus()));
         } catch (Exception e) {
-            builder.down();
-            builder.withDetail("Unable to obtain Mule runtime health status", e.getMessage());
+            builder.down(e);
         }
     }
 

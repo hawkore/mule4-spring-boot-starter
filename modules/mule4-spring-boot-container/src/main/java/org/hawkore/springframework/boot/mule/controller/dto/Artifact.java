@@ -17,12 +17,13 @@ package org.hawkore.springframework.boot.mule.controller.dto;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 import org.mule.runtime.deployment.model.api.application.ApplicationStatus;
 
 /**
- * The type Artifact.
+ * Abstract Mule Artifact
  *
  * @param <T>
  *     the type parameter
@@ -61,13 +62,25 @@ public abstract class Artifact<T extends Artifact> {
      * @return the boolean
      */
     public boolean isDeployed() {
-        return status == ApplicationStatus.STARTED;
+        return ApplicationStatus.STARTED.equals(status);
     }
 
+    /**
+     * Gets status.
+     *
+     * @return the status
+     */
     public ApplicationStatus getStatus() {
         return status;
     }
 
+    /**
+     * Sets status.
+     *
+     * @param status
+     *     the status
+     * @return this for chaining
+     */
     public Artifact<T> setStatus(ApplicationStatus status) {
         this.status = status;
         return this;
@@ -101,9 +114,44 @@ public abstract class Artifact<T extends Artifact> {
      * @return the last modified utc date time
      */
     public String getLastModifiedUTCDateTime() {
-        return LocalDateTime.ofEpochSecond(lastModified == 0 ? 0 : lastModified / 1000, 0, ZoneOffset.UTC).toString();
+        return LocalDateTime.ofEpochSecond(lastModified / 1000, 0, ZoneOffset.UTC).toString();
     }
 
+    /**
+     * Equals boolean.
+     *
+     * @param o
+     *     the o
+     * @return the boolean
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Artifact)) {
+            return false;
+        }
+        Artifact<?> artifact = (Artifact<?>)o;
+        return lastModified == artifact.lastModified && Objects.equals(name, artifact.name)
+                   && status == artifact.status;
+    }
+
+    /**
+     * Hash code int.
+     *
+     * @return the int
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, status, lastModified);
+    }
+
+    /**
+     * To string string.
+     *
+     * @return the string
+     */
     @Override
     public String toString() {
         return new StringJoiner(", ", this.getClass().getSimpleName() + "[", "]").add("name='" + name + "'")

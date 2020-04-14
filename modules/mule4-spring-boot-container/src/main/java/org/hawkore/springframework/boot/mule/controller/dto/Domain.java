@@ -15,7 +15,23 @@
  */
 package org.hawkore.springframework.boot.mule.controller.dto;
 
+import java.util.Objects;
+
 /**
+ * Mule Domain
+ *
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
-public class Domain extends Artifact<Domain> {}
+public class Domain extends Artifact<Domain> {
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o) && o instanceof Domain;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), "d");
+    }
+
+}

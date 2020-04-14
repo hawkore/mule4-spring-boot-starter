@@ -16,10 +16,17 @@
 package org.hawkore.springframework.boot.mule.utils;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.zip.ZipEntry;
 
 import org.hawkore.springframework.boot.mule.exception.DeployArtifactException;
+import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockMultipartFile;
 
 /**
@@ -28,6 +35,8 @@ import org.springframework.mock.web.MockMultipartFile;
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
 public class StorageUtilsTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StorageUtilsTest.class);
 
     @Test(expected = DeployArtifactException.class)
     public void storeArtifactTempMultipartNull() {
@@ -57,6 +66,43 @@ public class StorageUtilsTest {
     @Test(expected = DeployArtifactException.class)
     public void storeArtifactTempIO() throws IOException {
         StorageUtils.storeArtifactTemp("name", null);
+    }
+
+    @Test
+    public void ensureDirectoryExists() throws IOException {
+        Path temporalDir = Files.createTempDirectory("_testStorageUtilsTest");
+        StorageUtils.ensureDirectoryExists(temporalDir.toFile());
+        Assert.assertTrue(temporalDir.toFile().exists());
+    }
+
+    @Test(expected = IOException.class)
+    public void ensureDirectoryExistsKO_IN_EXISTING_FILE() throws IOException {
+        Path temporalFile = Files.createTempFile("_testStorageUtilsTest", "_test");
+        StorageUtils.ensureDirectoryExists(temporalFile.toFile());
+    }
+
+    @Test(expected = IOException.class)
+    public void ensureDirectoryExistsKO_WITH_INVALID_NAME() throws IOException {
+        Path temporalDir = Files.createTempDirectory("_testStorageUtilsTest");
+        StorageUtils.ensureDirectoryExists(new File(temporalDir.toFile(), "\0"));
+    }
+
+    @Test(expected = IOException.class)
+    public void verifyZipFilePathsSecurityRoot() throws IOException {
+        ZipEntry zipEntry = new ZipEntry("/root/file");
+        StorageUtils.verifyZipFilePaths(zipEntry);
+    }
+
+    @Test(expected = IOException.class)
+    public void verifyZipFilePathsSecurityRelative() throws IOException {
+        ZipEntry zipEntry = new ZipEntry("../root/file");
+        StorageUtils.verifyZipFilePaths(zipEntry);
+    }
+
+    @Test(expected = IOException.class)
+    public void verifyZipFilePathsSecurityRelative2() throws IOException {
+        ZipEntry zipEntry = new ZipEntry("./../root/file");
+        StorageUtils.verifyZipFilePaths(zipEntry);
     }
 
 }

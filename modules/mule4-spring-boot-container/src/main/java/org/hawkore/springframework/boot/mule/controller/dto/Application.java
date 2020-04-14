@@ -15,7 +15,23 @@
  */
 package org.hawkore.springframework.boot.mule.controller.dto;
 
+import java.util.Objects;
+
 /**
+ * Mule Application
+ *
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
-public class Application extends Artifact<Application> {}
+public class Application extends Artifact<Application> {
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o) && o instanceof Application;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), "a");
+    }
+
+}

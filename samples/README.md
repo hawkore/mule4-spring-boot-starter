@@ -22,7 +22,7 @@ mvn clean package
 
 ## Spring boot Admin server
 
-Build and run `spring-boot-admin-server` 
+Build and run `spring-boot-admin-server`:
 
 ``` bash
 cd spring-boot-admin-server

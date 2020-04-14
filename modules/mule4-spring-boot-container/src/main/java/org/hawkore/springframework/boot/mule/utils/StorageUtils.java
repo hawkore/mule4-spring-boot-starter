@@ -32,9 +32,12 @@ import org.hawkore.springframework.boot.mule.exception.DeployArtifactException;
 import org.mule.runtime.core.api.util.FileUtils;
 import org.mule.runtime.core.api.util.IOUtils;
 import org.mule.runtime.core.api.util.compression.InvalidZipFileException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.IOUtils.copy;
 
 /**
@@ -43,6 +46,8 @@ import static org.apache.commons.io.IOUtils.copy;
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
 public class StorageUtils {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(StorageUtils.class);
 
     private StorageUtils() {}
 
@@ -53,37 +58,27 @@ public class StorageUtils {
      *     the archive
      * @param directory
      *     the directory
-     * @param verify
-     *     the verify
      * @throws IOException
      *     the io exception
      */
-    public static void unzip(InputStream archive, File directory, boolean verify) throws IOException {
-        if (directory.exists()) {
-            if (!directory.isDirectory()) {
-                throw new IOException("Provided directory is not a directory: " + directory);
-            }
-        } else {
-            if (!directory.mkdirs()) {
-                throw new IOException("Could not create directory: " + directory);
-            }
-        }
+    public static void unzip(InputStream archive, File directory) throws IOException {
+
+        ensureDirectoryExists(directory);
+
         try (ZipInputStream zip = new ZipInputStream(archive)) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
-                if (verify) {
-                    verifyZipFilePaths(entry);
-                }
+
+                verifyZipFilePaths(entry);
+
                 File f = FileUtils.newFile(directory, entry.getName());
+
                 if (entry.isDirectory()) {
-                    if (!f.exists() && !f.mkdirs()) {
-                        throw new IOException("Could not create directory: " + f);
-                    }
+                    ensureDirectoryExists(f);
                 } else {
                     File file = new File(directory, entry.getName());
-                    if (!file.getParentFile().exists() && !file.getParentFile().mkdirs()) {
-                        throw new IOException("Unable to create folders for zip entry: " + entry.getName());
-                    }
+                    // ensure parent directory exists
+                    ensureDirectoryExists(file.getParentFile());
 
                     OutputStream os = new BufferedOutputStream(new FileOutputStream(f));
                     copy(zip, os);
@@ -93,7 +88,16 @@ public class StorageUtils {
         }
     }
 
-    private static void verifyZipFilePaths(ZipEntry entry) throws InvalidZipFileException {
+    /**
+     * Verify zip file paths.
+     *
+     * @param entry
+     *     the entry
+     * @throws InvalidZipFileException
+     *     the invalid zip file exception
+     */
+    /* checks ZipEntry security */
+    static void verifyZipFilePaths(ZipEntry entry) throws InvalidZipFileException {
         Path namePath = Paths.get(entry.getName());
         if (namePath.getRoot() != null) {
             // According to .ZIP File Format Specification (Section 4.4.17), the path can not be absolute
@@ -105,7 +109,27 @@ public class StorageUtils {
     }
 
     /**
-     * Store artifact temp file.
+     * Ensure directory exists.
+     *
+     * @param directory
+     *     the directory
+     * @throws IOException
+     *     the io exception
+     */
+    static void ensureDirectoryExists(File directory) throws IOException {
+        if (directory.exists()) {
+            if (!directory.isDirectory()) {
+                throw new IOException("Provided directory is not a directory: " + directory);
+            }
+        } else {
+            if (!directory.mkdirs()) {
+                throw new IOException("Could not create directory: " + directory);
+            }
+        }
+    }
+
+    /**
+     * Save artifact as a temporal file.
      *
      * @param file
      *     the file
@@ -122,7 +146,7 @@ public class StorageUtils {
     }
 
     /**
-     * Store artifact file.
+     * Save artifact as a temporal file.
      *
      * @param name
      *     the name
@@ -132,7 +156,7 @@ public class StorageUtils {
      */
     public static File storeArtifactTemp(String name, InputStream inputStream) {
         String fileName = StringUtils.cleanPath(name);
-        if (StringUtils.isEmpty(name) || name.isEmpty()) {
+        if (StringUtils.isEmpty(fileName)) {
             throw new DeployArtifactException("You must provide a valid artifact file name. Please try again!");
         }
         try {
@@ -147,6 +171,20 @@ public class StorageUtils {
             return aFile;
         } catch (Exception ex) {
             throw new DeployArtifactException("Could not store artifact file " + fileName + ". Please try again!", ex);
+        }
+    }
+
+    /**
+     * Clean up folder.
+     *
+     * @param folder
+     *     the folder
+     */
+    public static void cleanUpFolder(File folder) {
+        try {
+            deleteDirectory(folder);
+        } catch (Exception e) {
+            LOGGER.warn("Unable to full cleanUpFolder. Error was: {}", e.getMessage());
         }
     }
 

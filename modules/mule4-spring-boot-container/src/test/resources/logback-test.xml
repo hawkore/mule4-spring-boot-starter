@@ -13,7 +13,7 @@
     <appender-ref ref="Console" />
   </root>
 
-  <logger name="org.hawkore" level="trace" additivity="false">
+  <logger name="org.hawkore.springframework.boot.mule" level="error" additivity="false">
     <appender-ref ref="Console" />
   </logger>
 

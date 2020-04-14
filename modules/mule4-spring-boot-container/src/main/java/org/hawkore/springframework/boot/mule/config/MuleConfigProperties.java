@@ -33,9 +33,12 @@ public class MuleConfigProperties {
 
     /** Mule base directory */
     private File base;
-    /** Mule artifacts to deploy on Mule runtime container at start time */
+    /** Mule domains to be deployed into Mule runtime container at start time */
     private List<Resource> domains;
+    /** Mule applications to be deployed into Mule runtime container at start time */
     private List<Resource> apps;
+    /** Mule server plugins to be deployed before Mule runtime starts */
+    private List<Resource> serverPlugins;
     /** Mule artifacts initialization flags */
     private boolean lazyInitializationEnabled = false;
     private boolean xmlValidationsEnabled = true;
@@ -262,6 +265,27 @@ public class MuleConfigProperties {
      */
     public MuleConfigProperties setPatches(List<String> patches) {
         this.patches = patches;
+        return this;
+    }
+
+    /**
+     * Gets server plugins.
+     *
+     * @return the server plugins
+     */
+    public List<Resource> getServerPlugins() {
+        return serverPlugins;
+    }
+
+    /**
+     * Sets server plugins.
+     *
+     * @param serverPlugins
+     *     the server plugins
+     * @return this for chaining
+     */
+    public MuleConfigProperties setServerPlugins(List<Resource> serverPlugins) {
+        this.serverPlugins = serverPlugins;
         return this;
     }
 

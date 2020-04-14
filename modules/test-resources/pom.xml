@@ -32,6 +32,8 @@ limitations under the License.
   <modules>
     <module>artifacts/test-mule-domain</module>
     <module>artifacts/test-mule-app</module>
+    <module>artifacts/test-mule-domain-bad</module>
+    <module>artifacts/test-mule-app-bad</module>
   </modules>
 
 </project>

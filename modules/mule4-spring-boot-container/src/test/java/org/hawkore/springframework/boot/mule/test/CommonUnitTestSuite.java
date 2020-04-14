@@ -15,7 +15,7 @@
  */
 package org.hawkore.springframework.boot.mule.test;
 
-import org.hawkore.springframework.boot.mule.container.SpringBootMule4RuntimeMicroServiceTestCases;
+import org.hawkore.springframework.boot.mule.container.SpringBootMule4RuntimeStopStartCleanStartupTestCases;
 import org.hawkore.springframework.boot.mule.container.SpringBootMule4RuntimeTestCases;
 import org.hawkore.springframework.boot.mule.container.SpringBootMule4ShutdownTestCases;
 import org.hawkore.springframework.boot.mule.utils.StorageUtilsTest;
@@ -27,6 +27,6 @@ import org.junit.runners.Suite.SuiteClasses;
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
 @RunWith(Suite.class)
-@SuiteClasses({SpringBootMule4RuntimeTestCases.class, SpringBootMule4RuntimeMicroServiceTestCases.class,
+@SuiteClasses({SpringBootMule4RuntimeTestCases.class, SpringBootMule4RuntimeStopStartCleanStartupTestCases.class,
     SpringBootMule4ShutdownTestCases.class, StorageUtilsTest.class})
-public class UnitTestSuite {}
+public class CommonUnitTestSuite {}

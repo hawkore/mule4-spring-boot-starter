@@ -18,21 +18,40 @@ package org.hawkore.springframework.boot.mule.controller.dto;
 import java.util.StringJoiner;
 
 /**
+ * Simple error message.
+ *
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
 public class ErrorMessage {
 
     private String message;
 
+    /**
+     * Gets message.
+     *
+     * @return the message
+     */
     public String getMessage() {
         return message;
     }
 
+    /**
+     * Sets message.
+     *
+     * @param message
+     *     the message
+     * @return this for chaining
+     */
     public ErrorMessage setMessage(String message) {
         this.message = message;
         return this;
     }
 
+    /**
+     * To string string.
+     *
+     * @return the string
+     */
     @Override
     public String toString() {
         return new StringJoiner(", ", ErrorMessage.class.getSimpleName() + "[", "]").add("message='" + message + "'")

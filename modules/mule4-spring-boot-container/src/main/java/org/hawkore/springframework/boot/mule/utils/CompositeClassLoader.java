@@ -200,7 +200,7 @@ public class CompositeClassLoader extends ClassLoader {
 
     // Default strategy
 
-    private static class DefaultStrategy implements ClassLoaderStrategy {
+    public static class DefaultStrategy implements ClassLoaderStrategy {
 
         private final Predicate<String> inclusionClassFilter;
         private final Predicate<String> exclusionClassFilter;
@@ -230,10 +230,10 @@ public class CompositeClassLoader extends ClassLoader {
         }
 
         /**
-         * Find class class.
+         * Find class.
          *
          * @param cl
-         *     the cl
+         *     the classLoader
          * @param className
          *     the class name
          * @return the class
@@ -246,15 +246,17 @@ public class CompositeClassLoader extends ClassLoader {
                 }
                 return cl.loadClass(className);
             } catch (Exception e) {
+                // this catch is required, as we need to iterate over all provided classloaders within our composite
+                // classloader
                 return null;
             }
         }
 
         /**
-         * Find resource url.
+         * Find resource.
          *
          * @param cl
-         *     the cl
+         *     the classLoader
          * @param name
          *     the name
          * @return the url
@@ -265,22 +267,19 @@ public class CompositeClassLoader extends ClassLoader {
                 if (!inclusionResourceFilter.test(name) || exclusionResourceFilter.test(name)) {
                     return null;
                 }
-                URL res = cl.getResource(name);
-                if (res == null || !inclusionResourceFilter.test(res.getFile()) || exclusionResourceFilter
-                                                                                       .test(res.getFile())) {
-                    return null;
-                }
-                return res;
+                return cl.getResource(name);
             } catch (Exception e) {
+                // this catch is required, as we need to iterate over all provided classloaders within our composite
+                // classloader
                 return null;
             }
         }
 
         /**
-         * Find resources set.
+         * Find resources.
          *
          * @param cl
-         *     the cl
+         *     the classLoader
          * @param name
          *     the name
          * @return the set
@@ -290,20 +289,18 @@ public class CompositeClassLoader extends ClassLoader {
         @Override
         public Set<URL> findResources(ClassLoader cl, String name) throws IOException {
             try {
-                if (!name.isEmpty() && (!inclusionResourceFilter.test(name) || exclusionResourceFilter.test(name))) {
+                if (!inclusionResourceFilter.test(name) || exclusionResourceFilter.test(name)) {
                     return Collections.emptySet();
                 }
                 HashSet<URL> resources = new HashSet<>(); //NOSONAR
                 Enumeration<URL> c = cl.getResources(name); //NOSONAR
                 while (c.hasMoreElements()) {
-                    URL res = c.nextElement();
-                    if (!inclusionResourceFilter.test(res.getFile()) || exclusionResourceFilter.test(res.getFile())) {
-                        continue;
-                    }
-                    resources.add(res);
+                    resources.add(c.nextElement());
                 }
                 return resources;
             } catch (Exception e) {
+                // this catch is required, as we need to iterate over all provided classloaders within our composite
+                // classloader
                 return Collections.emptySet();
             }
         }
