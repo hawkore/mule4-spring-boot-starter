@@ -265,7 +265,7 @@ limitations under the License.
             <name>resolve</name>
             <description>resolve</description>
             <scm>resolve</scm>
-            <repositories>resolve</repositories>
+            <repositories>keep</repositories>
             <developers>resolve</developers>
             <organization>resolve</organization>
           </pomElements>
