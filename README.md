@@ -7,10 +7,11 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![codecov](https://codecov.io/gh/hawkore/mule4-spring-boot-starter/branch/master/graph/badge.svg)](https://codecov.io/gh/hawkore/mule4-spring-boot-starter) 
 [![Sonar Quality Gate](https://img.shields.io/sonar/quality_gate/hawkore_mule4-spring-boot-starter?label=code%20quality&server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/dashboard?id=hawkore_mule4-spring-boot-starter)
+![Release](https://img.shields.io/github/v/tag/hawkore/mule4-spring-boot-starter?label=release)
 
 [![Maven central starter for Mule CE](https://img.shields.io/static/v1.svg?label=maven-central&message=Starter%20for%20Mule%20CE&color=blue)](https://search.maven.org/search?q=g:org.hawkore.springframework.boot%20AND%20a:mule4-spring-boot-starter-ce)
 [![Maven central starter for Mule EE](https://img.shields.io/static/v1.svg?label=maven-central&message=Starter%20for%20Mule%20EE&color=blue)](https://search.maven.org/search?q=g:org.hawkore.springframework.boot%20AND%20a:mule4-spring-boot-starter-ee)
-[![javadoc](https://javadoc.io/badge2/org.hawkore.springframework.boot/mule4-spring-boot-container/javadoc.svg)](https://javadoc.io/doc/org.hawkore.springframework.boot/mule4-spring-boot-container)
+[![javadoc](https://javadoc.io/badge2/org.hawkore.springframework.boot/mule4-spring-boot-container/javadoc.svg?update)](https://javadoc.io/doc/org.hawkore.springframework.boot/mule4-spring-boot-container)
 
 <p align="center"><b>A 'Bootiful' approach to run Mule 4 embedded into a Spring Boot application.</b></p>
 
