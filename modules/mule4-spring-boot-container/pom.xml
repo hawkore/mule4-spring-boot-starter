@@ -96,7 +96,7 @@ limitations under the License.
             <id>attach-sources</id>
             <phase>verify</phase>
             <goals>
-              <goal>jar-no-fork</goal>
+              <goal>jar</goal>
             </goals>
           </execution>
         </executions>
