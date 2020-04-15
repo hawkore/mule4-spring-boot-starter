@@ -25,6 +25,7 @@
     + [Usage example](#usage-example)
   * [Appendix](#appendix)
     + [Configuration](#configuration)
+    + [Help and troubleshooting](#help-and-troubleshooting)
   * [License](#license)
 
 ## Getting Started
@@ -177,6 +178,54 @@ All configuration properties start with `mule`. Below is a list of main supporte
 
 
 Check `org.hawkore.springframework.boot.mule.config.MuleConfigProperties` implementation for more details.
+
+### Help and troubleshooting
+
+#### Build fails: mule-runtime-impl-bom not found when I try to package my Spring Boot application using starter-ce
+
+For some Mule Community versions, MuleSoft does not release on public maven repositories the Mule runtime BOM.
+
+You can solve it in two ways:
+
+- The easy one, add **Hawkore's public maven repository** to your Spring Boot application's pom.xml file:
+     ```xml
+     <repositories>
+         <repository>
+             <id>public.hawkore.releases</id>
+             <name>Hawkore Public Repository</name>
+             <url>https://repository.hawkore.com/maven2/</url>
+             <layout>default</layout>
+         </repository>
+     </repositories>
+     ```
+  
+- Manually install Mule Runtime BOM into your local maven repository by yourself:
+
+    1. Clone [mule-distributions](https://github.com/mulesoft/mule-distributions) github project.
+        ```
+        git clone https://github.com/mulesoft/mule-distributions.git
+        ```
+    
+    2. Checkout a specific Mule's Version, replace `<tag_name>` with Mule's Version you need, for example `4.2.2`:
+        ```
+        cd mule-distributions
+        git checkout <tag_name>
+        ```
+    
+    3. Install `mule-distribution` parent pom:
+        ```
+        mvn clean install --non-recursive -Dmaven.test.skip=true -DskipTests=true -DskipVerifications=true -Prelease -DskipTests -DskipVerifications -DskipGpg -Dmaven.javadoc.skip=true
+        ```
+       
+    4. Install `mule-services-all` pom:
+        ```
+        mvn clean install -Dmaven.test.skip=true -DskipTests=true -DskipVerifications=true -f services-all/pom.xml -Prelease -DskipTests -DskipVerifications -DskipGpg -Dmaven.javadoc.skip=true 
+        ```
+       
+    5. Install `mule-bom` pom:
+        ```
+        mvn clean install -Dmaven.test.skip=true -DskipTests=true -DskipVerifications=true -f bom/pom.xml -Prelease -DskipTests -DskipVerifications -DskipGpg -Dmaven.javadoc.skip=true
+        ```
 
 ## License
 Copyright 2020 HAWKORE, S.L.
