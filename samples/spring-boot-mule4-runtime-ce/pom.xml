@@ -242,4 +242,18 @@
 
   </dependencies>
 
+  <repositories>
+    <repository>
+      <id>central</id>
+      <name>Central Repository</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </repository>
+    <repository>
+      <id>public.hawkore.releases</id>
+      <name>Hawkore Public Repository</name>
+      <url>https://repository.hawkore.com/maven2/</url>
+      <layout>default</layout>
+    </repository>
+  </repositories>
+
 </project>
