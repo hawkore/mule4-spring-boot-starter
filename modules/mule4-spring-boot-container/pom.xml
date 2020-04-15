@@ -29,6 +29,14 @@ limitations under the License.
   <packaging>jar</packaging>
   <name>Spring Boot Container for Mule 4 Runtime</name>
 
+  <url>https://github.com/hawkore/mule4-spring-boot-starter</url>
+
+  <scm>
+    <connection>scm:git:git://github.com/hawkore/mule4-spring-boot-starter.git</connection>
+    <developerConnection>scm:git:ssh://github.com:hawkore/mule4-spring-boot-starter.git</developerConnection>
+    <url>https://github.com/hawkore/mule4-spring-boot-starter/tree/master/modules/mule4-spring-boot-container</url>
+  </scm>
+
   <properties>
     <gpg.skip>false</gpg.skip>
     <license.file>../../LICENSE</license.file>
