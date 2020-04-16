@@ -183,7 +183,7 @@ Check `org.hawkore.springframework.boot.mule.config.MuleConfigProperties` implem
 
 #### Build fails: mule-runtime-impl-bom not found when I try to package my Spring Boot application using starter-ce
 
-For some Mule Community versions, MuleSoft does not release on public maven repositories the Mule runtime BOM.
+For some Mule Community versions, MuleSoft does not release to public maven repositories the Mule Runtime BOM.
 
 You can solve it in two ways:
 
@@ -199,14 +199,14 @@ You can solve it in two ways:
      </repositories>
      ```
   
-- Manually install Mule Runtime BOM into your local maven repository by yourself:
+- Install Mule Runtime BOM into your local maven repository by yourself:
 
     1. Clone [mule-distributions](https://github.com/mulesoft/mule-distributions) github project.
         ```
         git clone https://github.com/mulesoft/mule-distributions.git
         ```
     
-    2. Checkout a specific Mule's Version, replace `<tag_name>` with Mule's Version you need, for example `4.2.2`:
+    2. Checkout a specific Mule's Version, replace `<tag_name>` with Mule's Version you need, for example `mule-4.2.2`:
         ```
         cd mule-distributions
         git checkout <tag_name>
