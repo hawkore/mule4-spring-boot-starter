@@ -22,7 +22,8 @@
         + [Mule Runtime versions](#mule-runtime-versions)
     + [Enable Mule 4 Runtime](#embedded-mule-4-runtime)
     + [Expose deployment services](#expose-deployment-services)
-    + [Usage example](#usage-example)
+    + [Simple Usage example](#simple-usage-example)
+    + [Kubernetes deployment example](#kubernetes-deployment-example)
   * [Appendix](#appendix)
     + [Configuration](#configuration)
     + [Help and troubleshooting](#help-and-troubleshooting)
@@ -140,13 +141,17 @@ public class SpringBootEmbeddedMuleRuntime {
 
 Check `org.hawkore.springframework.boot.mule.controller.MuleRuntimeDeploymentServices` implementation for more details.
 
-## Usage example
+## Simple usage example
 
 Take a look to [usage example](samples/README.md) to see how easy is to run Mule 4 as a spring-boot application, and monitor it with [Spring Boot Admin](https://github.com/codecentric/spring-boot-admin#codecentrics-spring-boot-admin).
 
 ![](docs/assets/sba-mule4-wallboard.png)
 ![](docs/assets/sba-mule4-insight-details.png)
 ![](docs/assets/sba-mule4-logfile.png)
+
+## Kubernetes deployment example
+
+Take a look to [Distributed computation with Mule 4 and kubernetes](https://github.com/hawkore/examples-spring-boot-mule4-kubernetes)
 
 ## Appendix
 
