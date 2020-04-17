@@ -153,6 +153,8 @@ Take a look to [usage example](samples/README.md) to see how easy is to run Mule
 
 Take a look to [Distributed computation with Mule 4 and kubernetes](https://github.com/hawkore/examples-spring-boot-mule4-kubernetes)
 
+![](docs/assets/kube-mule-ignite.png)
+
 ## Appendix
 
 ### Configuration
