@@ -44,7 +44,7 @@ This will allow you to build highly productive and easily scalable systems with 
     - Show health status
     - ...
 - **Manage Mule artifacts** (applications/domains), exposing Mule deployment services through Spring boot REST controllers, as a stand-alone instance.
-- **Easy deployment of Mule applications as micro-services** in kubernetes or another container management platform.
+- **Easy deployment of Mule applications as micro-services** on kubernetes or another container management platform.
 - **Deploy** Mule artifacts stored in an **external repository**, see `mule.apps` and `mule.domains` properties in [Configuration](#configuration) section.
 - ...
 
