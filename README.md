@@ -58,7 +58,7 @@ The main dependency is JDK 8+. Tested with:
 
 Add **Spring boot starter for Mule 4** dependency to your Spring Boot application's pom.xml file:
 
-- For Mule 4 CE Runtime 4.2.2 (**C**ommunity **E**dition):
+- For Mule 4 CE Runtime 4.2.2 (**C**ommunity **E**dition, a.k.a. **Kernel**):
 
     ```xml
     <dependency>
