@@ -1,12 +1,12 @@
 ## Build Spring Boot Mule 4 Runtime CE
 
-Build spring boot application:
+Build Spring Boot application:
 
 ``` bash
 mvn clean package
 ```
 
-Build spring boot application into a docker image:
+Build Spring Boot application into a docker image:
 
 ``` bash
 mvn clean package -Pdocker
