@@ -43,8 +43,8 @@ This will allow you to build highly productive and easily scalable systems with 
     - Interact with JMX-beans
     - Show health status
     - ...
-- **Manage Mule artifacts** (applications/domains), exposing Mule deployment services through Spring boot REST controllers, as a stand-alone instance.
-- **Easy deployment of Mule applications as micro-services** on kubernetes or another container management platform.
+- **Manage Mule artifacts** (applications/domains), exposing Mule deployment services through Spring Boot REST controllers, as a stand-alone instance.
+- **Easy deployment of Mule applications as micro-services** on Kubernetes or another container management platform.
 - **Deploy** Mule artifacts stored in an **external repository**, see `mule.apps` and `mule.domains` properties in [Configuration](#configuration) section.
 - ...
 
@@ -56,7 +56,7 @@ The main dependency is JDK 8+. Tested with:
  
 #### Dependencies
 
-Add **Spring boot starter for Mule 4** dependency to your Spring Boot application's pom.xml file:
+Add **Spring Boot starter for Mule 4** dependency to your Spring Boot application's pom.xml file:
 
 - For Mule 4 CE Runtime 4.2.2 (**C**ommunity **E**dition, a.k.a. **Kernel**):
 
@@ -79,20 +79,20 @@ Add **Spring boot starter for Mule 4** dependency to your Spring Boot applicatio
     ```
     **NOTE**:
     
-    - You will need access to mulesoft's private repository (https://repository.mulesoft.org/nexus/content/repositories/private/), 
+    - You will need access to Mulesoft's private repository (https://repository.mulesoft.org/nexus/content/repositories/private/), 
     otherwise, try to install AnypointStudio 7+, add Mule Runtime 4.2.2 EE to AnypointStudio (or another Mule enterprise version to match the starter version you use) and 
-    create from AnypointStudio a Mule Application with that Mule Runtime EE version, this should update your local maven repository with required Mule enterprise modules to build embedded Mule 4 Runtime EE as Spring Boot application ;).
+    create from AnypointStudio a Mule Application with that Mule Runtime EE version. This should update your local maven repository with required Mule enterprise modules to build embedded Mule 4 Runtime EE as a Spring Boot application ;).
     
-    - To deploy and run applications on production, you will need a valid Mule EE license into the classpath of your embedded application, follow the steps at [Install an Enterprise License](https://docs.mulesoft.com/mule-runtime/4.2/installing-an-enterprise-license) and 
+    - To deploy and run applications on production, you will need a valid Mule EE license into the classpath of your Spring Boot Mule Runtime application. Follow the steps at [Install an Enterprise License](https://docs.mulesoft.com/mule-runtime/4.2/installing-an-enterprise-license) and 
     [Install Enterprise License on Embedded Mule](https://docs.mulesoft.com/mule-runtime/4.2/installing-an-enterprise-license#install-enterprise-license-on-embedded-mule).
 
-    Take a look to [spring-boot-mule4-runtime-ee](samples/spring-boot-mule4-runtime-ee/README.md) sample project.
+    Take a look at [spring-boot-mule4-runtime-ee](samples/spring-boot-mule4-runtime-ee/README.md) sample project.
 
 #### Mule Runtime versions
 
 This starter will add Mule Runtime dependencies to your Spring Boot application.
 
-As new versions of Mule Runtime are released we will release new versions of this stater.
+As new versions of Mule Runtime are released we will release new versions of this starter.
 
 | Starter version      | Mule CE version (starter-ce)     | Mule EE version (starter-ee)      |
 |:--------------------:|:--------------------------------:|:---------------------------------:|
@@ -144,7 +144,7 @@ Check `org.hawkore.springframework.boot.mule.controller.MuleRuntimeDeploymentSer
 
 ## Simple usage example
 
-Take a look to [usage example](samples/README.md) to see how easy is to run Mule 4 as a spring-boot application, and monitor it with [Spring Boot Admin](https://github.com/codecentric/spring-boot-admin#codecentrics-spring-boot-admin).
+Take a look at [usage example](samples/README.md) to see how easy it is to run Mule 4 as a spring-boot application, and monitor it with [Spring Boot Admin](https://github.com/codecentric/spring-boot-admin#codecentrics-spring-boot-admin).
 
 ![](docs/assets/sba-mule4-wallboard.png)
 ![](docs/assets/sba-mule4-insight-details.png)
@@ -152,7 +152,7 @@ Take a look to [usage example](samples/README.md) to see how easy is to run Mule
 
 ## Kubernetes deployment example
 
-Take a look to [Distributed computation with Mule 4 and kubernetes](https://github.com/hawkore/examples-spring-boot-mule4-kubernetes)
+Take a look at the [example of distributed computation with Mule 4 and Kubernetes](https://github.com/hawkore/examples-spring-boot-mule4-kubernetes)
 
 ![](docs/assets/kube-mule-ignite.png)
 
@@ -160,7 +160,7 @@ Take a look to [Distributed computation with Mule 4 and kubernetes](https://gith
 
 ### Configuration
 The additional configuration of this starter can be provided by configuration properties - the Spring Boot way.
-All configuration properties start with `mule`. Below is a list of main supported properties:
+All configuration properties start with `mule`. Below is a list of the main supported properties:
 
 |         Property          |             Values             | Default value |
 |:-------------------------:|:------------------------------:|:-------------:|
@@ -175,7 +175,7 @@ All configuration properties start with `mule`. Below is a list of main supporte
 | `mule.patches`  |        list of patches' names for Mule Runtime with high load priority        |       |
 | `mule.serverPlugins`  |        comma separated mule server plugins file(s) to be installed at startup        |       |
 
-- `mule.cleanStartup` will clean deployed apps and domains folders before start Mule Runtime, this is useful to deploy Mule Runtime with your "updatable" Mule application as a micro-service.
+- `mule.cleanStartup` will clean deployed apps and domains folders before starting Mule Runtime, this is useful to deploy Mule Runtime with your "updatable" Mule application as a micro-service.
 - `mule.domains`, `mule.apps` and `mule.serverPlugins` are loaded using [Spring's ResourceLoader](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#resources-resourceloader), so you must provide a valid URL format:
 
     |   Prefix                  | Example                        | Explanation                                 |
@@ -191,9 +191,9 @@ Check `org.hawkore.springframework.boot.mule.config.MuleConfigProperties` implem
 
 #### Build fails: mule-runtime-impl-bom not found when I try to package my Spring Boot application using starter-ce
 
-For some Mule Community versions, MuleSoft does not release to public maven repositories the Mule Runtime BOM.
+For some Mule CE versions, MuleSoft does not release the Mule Runtime BOM to public maven repositories.
 
-You can solve it in two ways:
+There are two ways to solve this:
 
 - The easy one, add **Hawkore's public maven repository** to your Spring Boot application's pom.xml file:
      ```xml
@@ -253,5 +253,5 @@ limitations under the License.
 
 ## About subcomponents
 This project may contains subcomponents with separate copyright
-notices and license terms. Your use of the source code for the these
-subcomponents is subject to the terms and conditions of them.
+notices and license terms. Your use of the source code for these
+subcomponents is subject to their terms and conditions.
