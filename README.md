@@ -21,6 +21,7 @@
         + [Dependencies](#dependencies)
         + [Mule Runtime versions](#mule-runtime-versions)
     + [Expose deployment services](#expose-deployment-services)
+        + [Securing Deployment Services](#securing-deployment-services)
     + [Simple Usage example](#simple-usage-example)
     + [Kubernetes deployment example](#kubernetes-deployment-example)
   * [Appendix](#appendix)
@@ -122,6 +123,43 @@ public class SpringBootEmbeddedMuleRuntime {
 ```
 
 Check `org.hawkore.springframework.boot.mule.controller.MuleRuntimeDeploymentServices` implementation for more details.
+
+#### Securing Deployment Services
+Since there are several approaches on solving authentication and authorization in distributed web applications this starter doesn’t ship a default one.
+
+A Spring Security configuration for deployment services could look like this:
+
+```java
+@Configuration(proxyBeanMethods = false)
+public class SecuritySecureConfig extends WebSecurityConfigurerAdapter {
+    
+    @Value("${server.port}")
+    private int serverPort;
+
+    private RequestMatcher forPortAndPath(final int port, final String pathPattern) {
+        return new AndRequestMatcher(forPort(port), new AntPathRequestMatcher(pathPattern));
+    }
+    
+    private RequestMatcher forPortAndPath(final int port, final HttpMethod method, final String pathPattern) {
+        return new AndRequestMatcher(forPort(port), new AntPathRequestMatcher(pathPattern, method.name()));
+    }
+    
+    private RequestMatcher forPort(final int port) {
+        return (HttpServletRequest request) -> port == request.getLocalPort();
+    }
+
+
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+
+    http.authorizeRequests(
+        (authorizeRequests) -> authorizeRequests.requestMatchers(forPortAndPath(serverPort, "/mule/**")).authenticated().anyRequest().denyAll()
+    );
+  }
+}
+```
+
+See also [Securing Spring Boot Admin Server](https://codecentric.github.io/spring-boot-admin/current/#securing-spring-boot-admin).
 
 ## Simple usage example
 
