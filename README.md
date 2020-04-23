@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/hawkore/mule4-spring-boot-starter/branch/master/graph/badge.svg)](https://codecov.io/gh/hawkore/mule4-spring-boot-starter) 
 [![Sonar Quality Gate](https://img.shields.io/sonar/quality_gate/hawkore_mule4-spring-boot-starter?label=code%20quality&server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/dashboard?id=hawkore_mule4-spring-boot-starter)
 ![Release](https://img.shields.io/github/v/tag/hawkore/mule4-spring-boot-starter?label=release&color=orange)
-[![javadoc](https://javadoc.io/badge2/org.hawkore.springframework.boot/mule4-spring-boot-container/javadoc.svg?update)](https://javadoc.io/doc/org.hawkore.springframework.boot/mule4-spring-boot-container)
+[![javadoc](https://javadoc.io/badge2/org.hawkore.springframework.boot/mule4-spring-boot-container/javadoc.svg?update2)](https://javadoc.io/doc/org.hawkore.springframework.boot/mule4-spring-boot-container)
 [![Maven central](https://img.shields.io/maven-central/v/org.hawkore.springframework.boot/mule4-spring-boot-starter-ce.svg)](https://search.maven.org/search?q=g:org.hawkore.springframework.boot%20AND%20a:mule4-spring-boot-starter*)
 
 <p align="center"><b>A 'Bootiful' approach to run Mule 4 embedded into a Spring Boot application.</b></p>
