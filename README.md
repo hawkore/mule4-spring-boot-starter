@@ -159,7 +159,7 @@ public class SecuritySecureConfig extends WebSecurityConfigurerAdapter {
 }
 ```
 
-See also [Securing Spring Boot Admin Server](https://codecentric.github.io/spring-boot-admin/current/#securing-spring-boot-admin).
+See also [Securing Client Actuator Endpoints](https://codecentric.github.io/spring-boot-admin/current/#_securing_client_actuator_endpoints).
 
 ## Simple usage example
 
