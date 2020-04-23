@@ -17,7 +17,6 @@ package org.hawkore.springframework.boot.mule.test.main;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import org.hawkore.springframework.boot.mule.config.EnableSpringMuleRuntime;
 import org.hawkore.springframework.boot.mule.config.EnableSpringMuleRuntimeDeploymentServices;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +31,6 @@ import org.springframework.context.annotation.Bean;
  *
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
-@EnableSpringMuleRuntime
 @EnableSpringMuleRuntimeDeploymentServices
 @SpringBootApplication
 public class SpringBootEmbeddedMuleRuntimeApp {

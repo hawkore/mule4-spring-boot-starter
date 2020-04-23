@@ -20,8 +20,8 @@
     + [Prerequisites](#prerequisites)
         + [Dependencies](#dependencies)
         + [Mule Runtime versions](#mule-runtime-versions)
-    + [Enable Mule 4 Runtime](#embedded-mule-4-runtime)
     + [Expose deployment services](#expose-deployment-services)
+        + [Securing Deployment Services](#securing-deployment-services)
     + [Simple Usage example](#simple-usage-example)
     + [Kubernetes deployment example](#kubernetes-deployment-example)
   * [Appendix](#appendix)
@@ -58,23 +58,23 @@ The main dependency is JDK 8+. Tested with:
 
 Add **Spring Boot starter for Mule 4** dependency to your Spring Boot application's pom.xml file:
 
-- For Mule 4 CE Runtime 4.2.2 (**C**ommunity **E**dition, a.k.a. **Kernel**):
+- For Mule 4 CE Runtime (**C**ommunity **E**dition, a.k.a. **Kernel**):
 
     ```xml
     <dependency>
         <groupId>org.hawkore.springframework.boot</groupId>
         <artifactId>mule4-spring-boot-starter-ce</artifactId>
-        <version>1.0.1</version>
+        <version>${mule4-spring-boot-starter.version}</version>
     </dependency>
     ```
 
-- For Mule 4 EE Runtime 4.2.2 (**E**nterprise **E**dition):
+- For Mule 4 EE Runtime (**E**nterprise **E**dition):
 
     ```xml
     <dependency>
         <groupId>org.hawkore.springframework.boot</groupId>
         <artifactId>mule4-spring-boot-starter-ee</artifactId>
-        <version>1.0.1</version>
+        <version>${mule4-spring-boot-starter.version}</version>
     </dependency>
     ```
     **NOTE**:
@@ -99,23 +99,6 @@ As new versions of Mule Runtime are released we will release new versions of thi
 | `1.0.X`              | `4.2.2`                          | `4.2.2`                           |
 
 
-### Embedded Mule 4 Runtime
-
-To embed Mule 4 Runtime into your Spring Boot application just add `@EnableSpringMuleRuntime` annotation:
-```java
-@EnableSpringMuleRuntime
-@SpringBootApplication
-public class SpringBootEmbeddedMuleRuntime {
-
-    public static void main(String[] args) {
-        SpringApplication app = new SpringApplication(SpringBootEmbeddedMuleRuntime.class);
-        app.setBannerMode(Mode.OFF);
-        app.run(args);
-    }
-
-}
-```
-
 ### Expose deployment services
 Deployment services will allow you to manage Mule artifacts on a running spring-boot embedded Mule 4 Runtime:
 
@@ -126,7 +109,6 @@ Deployment services will allow you to manage Mule artifacts on a running spring-
 
 To expose Mule 4 Runtime deployment services add `@EnableSpringMuleRuntimeDeploymentServices` annotation:
 ```java
-@EnableSpringMuleRuntime
 @EnableSpringMuleRuntimeDeploymentServices
 @SpringBootApplication
 public class SpringBootEmbeddedMuleRuntime {
@@ -141,6 +123,43 @@ public class SpringBootEmbeddedMuleRuntime {
 ```
 
 Check `org.hawkore.springframework.boot.mule.controller.MuleRuntimeDeploymentServices` implementation for more details.
+
+#### Securing Deployment Services
+Since there are several approaches on solving authentication and authorization in distributed web applications this starter doesn’t ship a default one.
+
+A Spring Security configuration for deployment services could look like this:
+
+```java
+@Configuration(proxyBeanMethods = false)
+public class SecuritySecureConfig extends WebSecurityConfigurerAdapter {
+    
+    @Value("${server.port}")
+    private int serverPort;
+
+    private RequestMatcher forPortAndPath(final int port, final String pathPattern) {
+        return new AndRequestMatcher(forPort(port), new AntPathRequestMatcher(pathPattern));
+    }
+    
+    private RequestMatcher forPortAndPath(final int port, final HttpMethod method, final String pathPattern) {
+        return new AndRequestMatcher(forPort(port), new AntPathRequestMatcher(pathPattern, method.name()));
+    }
+    
+    private RequestMatcher forPort(final int port) {
+        return (HttpServletRequest request) -> port == request.getLocalPort();
+    }
+
+
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+
+    http.authorizeRequests(
+        (authorizeRequests) -> authorizeRequests.requestMatchers(forPortAndPath(serverPort, "/mule/**")).authenticated().anyRequest().denyAll()
+    );
+  }
+}
+```
+
+See also [Securing Spring Boot Admin Server](https://codecentric.github.io/spring-boot-admin/current/#securing-spring-boot-admin).
 
 ## Simple usage example
 

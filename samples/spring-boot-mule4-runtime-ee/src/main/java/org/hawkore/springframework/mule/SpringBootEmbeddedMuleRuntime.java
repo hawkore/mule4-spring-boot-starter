@@ -15,7 +15,6 @@
  */
 package org.hawkore.springframework.mule;
 
-import org.hawkore.springframework.boot.mule.config.EnableSpringMuleRuntime;
 import org.hawkore.springframework.boot.mule.config.EnableSpringMuleRuntimeDeploymentServices;
 import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.SpringApplication;
@@ -26,7 +25,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
-@EnableSpringMuleRuntime
 @EnableSpringMuleRuntimeDeploymentServices
 @SpringBootApplication
 public class SpringBootEmbeddedMuleRuntime {

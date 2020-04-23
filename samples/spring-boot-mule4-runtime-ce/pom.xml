@@ -18,7 +18,7 @@
 
 
     <spring-boot-admin-client.version>2.1.6</spring-boot-admin-client.version>
-    <spring-boot.mule.version>1.0.1</spring-boot.mule.version>
+    <spring-boot.mule.version>1.0.2</spring-boot.mule.version>
 
     <!-- Should match with Mule's one to avoid incompatibilities -->
     <spring-boot.version>2.1.6.RELEASE</spring-boot.version>
@@ -119,19 +119,6 @@
           <version>${ignite.version}</version>
         </dependency>
       </dependencies>
-      <repositories>
-        <repository>
-          <id>central</id>
-          <name>Central Repository</name>
-          <url>https://repo.maven.apache.org/maven2</url>
-        </repository>
-        <repository>
-          <id>public.hawkore.releases</id>
-          <name>Hawkore Public Repository</name>
-          <url>https://repository.hawkore.com/maven2/</url>
-          <layout>default</layout>
-        </repository>
-      </repositories>
     </profile>
     <profile>
       <id>docker</id>

@@ -21,13 +21,21 @@ limitations under the License.
   <parent>
     <groupId>org.hawkore.springframework.boot</groupId>
     <artifactId>mule4-spring-boot-starter</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <artifactId>mule4-spring-boot-starter-ee</artifactId>
   <packaging>jar</packaging>
   <name>Spring Boot Starter for Mule 4 EE</name>
+
+  <url>https://github.com/hawkore/mule4-spring-boot-starter</url>
+
+  <scm>
+    <connection>scm:git:git://github.com/hawkore/mule4-spring-boot-starter.git</connection>
+    <developerConnection>scm:git:ssh://github.com:hawkore/mule4-spring-boot-starter.git</developerConnection>
+    <url>https://github.com/hawkore/mule4-spring-boot-starter/tree/master/modules/mule4-spring-boot-starter-ee</url>
+  </scm>
 
   <properties>
     <gpg.skip>false</gpg.skip>
