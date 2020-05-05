@@ -503,6 +503,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
                 LOGGER.info(
                     "{} dependency seems to be a MULE PATCH. Will be auto-loaded into high priority class loader!",
                     depName);
+                patchNames.remove(depName);
                 return true;
             }
             return patchNames.remove(depName);
