@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/hawkore/mule4-spring-boot-starter/branch/master/graph/badge.svg)](https://codecov.io/gh/hawkore/mule4-spring-boot-starter) 
 [![Sonar Quality Gate](https://img.shields.io/sonar/quality_gate/hawkore_mule4-spring-boot-starter?label=code%20quality&server=https%3A%2F%2Fsonarcloud.io)](https://sonarcloud.io/dashboard?id=hawkore_mule4-spring-boot-starter)
 ![Release](https://img.shields.io/github/v/tag/hawkore/mule4-spring-boot-starter?label=release&color=orange)
-[![javadoc](https://javadoc.io/badge2/org.hawkore.springframework.boot/mule4-spring-boot-container/javadoc.svg?update2)](https://javadoc.io/doc/org.hawkore.springframework.boot/mule4-spring-boot-container)
+[![javadoc](https://javadoc.io/badge2/org.hawkore.springframework.boot/mule4-spring-boot-container/javadoc.svg?update4)](https://javadoc.io/doc/org.hawkore.springframework.boot/mule4-spring-boot-container)
 [![Maven central](https://img.shields.io/maven-central/v/org.hawkore.springframework.boot/mule4-spring-boot-starter-ce.svg)](https://search.maven.org/search?q=g:org.hawkore.springframework.boot%20AND%20a:mule4-spring-boot-starter*)
 
 <p align="center"><b>A 'Bootiful' approach to run Mule 4 embedded into a Spring Boot application.</b></p>
@@ -81,13 +81,13 @@ Add **Spring Boot starter for Mule 4** dependency to your Spring Boot applicatio
 
 #### Mule Runtime versions
 
-This starter will add Mule Runtime dependencies to your Spring Boot application using mandatory `mule.bom.version` system property at build time, for èxample `mvn clean install -Dmule.bom.version=4.2.2`.
+This starter will add Mule Runtime dependencies to your Spring Boot application using mandatory `mule.bom.version` system property at build time, for example `mvn clean install -Dmule.bom.version=4.2.2`.
 
 Take a look at [spring-boot-mule4-runtime-ce](samples/spring-boot-mule4-runtime-ce/README.md) sample project (Mule Runtime CE 4.2.2 + hotfixes 5).
 
 Take a look at [spring-boot-mule4-runtime-ee](samples/spring-boot-mule4-runtime-ee/README.md) sample project (Mule Runtime EE 4.3.0).
 
-Check available Mule Runtime CE BOM at [MuleSoft's public maven repository](https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-runtime-impl-bom/)
+Check available Mule Runtime CE BOM at [MuleSoft's public maven repository](https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-runtime-impl-bom/).
 
 ### Expose deployment services
 Deployment services will allow you to manage Mule artifacts on a running spring-boot embedded Mule 4 Runtime:
