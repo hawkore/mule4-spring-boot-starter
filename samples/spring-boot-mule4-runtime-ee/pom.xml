@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.hawkore.springframework.boot</groupId>
   <artifactId>spring-boot-mule4-runtime-ee</artifactId>
-  <version>4.2.2</version>
+  <version>4.3.0</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -16,9 +16,11 @@
     <maven.deploy.skip>true</maven.deploy.skip>
     <maven.install.skip>true</maven.install.skip>
 
+    <!-- Spring boot starter for Mule -->
+    <mule4-spring-boot-starter.version>2.0.0-SNAPSHOT</mule4-spring-boot-starter.version>
 
+    <!-- spring-boot-admin-client to register at spring boot admin server-->
     <spring-boot-admin-client.version>2.1.6</spring-boot-admin-client.version>
-    <spring-boot.mule.version>1.0.2</spring-boot.mule.version>
 
     <!-- Should match with Mule's one to avoid incompatibilities -->
     <spring-boot.version>2.1.6.RELEASE</spring-boot.version>
@@ -199,11 +201,10 @@
     </dependency>
 
     <!-- Spring boot starter for Mule 4 Runtime EE -->
-
     <dependency>
       <groupId>org.hawkore.springframework.boot</groupId>
       <artifactId>mule4-spring-boot-starter-ee</artifactId>
-      <version>${spring-boot.mule.version}</version>
+      <version>${mule4-spring-boot-starter.version}</version>
     </dependency>
 
     <!-- Required by Mule's APIKit -->

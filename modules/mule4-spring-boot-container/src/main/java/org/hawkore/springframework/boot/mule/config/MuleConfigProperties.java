@@ -54,6 +54,10 @@ public class MuleConfigProperties {
      * List of Mule Runtime patches that need to take precedence in the Mule container classloader
      */
     private List<String> patches;
+    /**
+     * Auto load MULE PATCHES (dependencies starting with MULE- or SE-) into high priority classloader
+     */
+    private boolean autoLoadPatches = true;
 
     /**
      * Gets base.
@@ -286,6 +290,27 @@ public class MuleConfigProperties {
      */
     public MuleConfigProperties setServerPlugins(List<Resource> serverPlugins) {
         this.serverPlugins = serverPlugins;
+        return this;
+    }
+
+    /**
+     * Is auto load patches boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isAutoLoadPatches() {
+        return autoLoadPatches;
+    }
+
+    /**
+     * Sets auto load patches.
+     *
+     * @param autoLoadPatches
+     *     the auto load patches
+     * @return this for chaining
+     */
+    public MuleConfigProperties setAutoLoadPatches(boolean autoLoadPatches) {
+        this.autoLoadPatches = autoLoadPatches;
         return this;
     }
 
