@@ -93,6 +93,10 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
      */
     private static final String WITHIN_JAR_REGEX = "\\!\\/";
     /**
+     * Regular expression to remove jar extension
+     */
+    private static final String JAR_EXTENSION = "\\.jar";
+    /**
      * The Config properties.
      */
     @Autowired
@@ -481,7 +485,8 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     // load mule patches URLs from classloader
     private ClassLoader buildPatchesClassloader() {
         List<String> patchNames = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(configProperties.getPatches())) {
+        boolean emptyPatches = CollectionUtils.isEmpty(configProperties.getPatches());
+        if (!emptyPatches) {
             if (LOGGER.isDebugEnabled()) {
                 configProperties.getPatches().forEach(
                     p -> LOGGER.debug("[getPatchesClassloader] -> provided patch name with high priority {} ", p));
@@ -490,7 +495,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
         }
         URLClassLoader springClassLoader = (URLClassLoader)this.getClass().getClassLoader();
         URL[] patches = Stream.of(springClassLoader.getURLs()).filter(u -> {
-            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll("\\.jar", ""));
+            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("[getPatchesClassloader] -> dependency name to filter found on classloader {} ", depName);
             }
@@ -500,15 +505,11 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
                     depName);
                 return true;
             }
-            if (patchNames.stream().anyMatch(p -> p.trim().equals(depName))) {
-                patchNames.remove(depName);
-                return true;
-            }
-            return false;
+            return patchNames.remove(depName);
         }).sorted((a, b) -> {
-            if (!CollectionUtils.isEmpty(configProperties.getPatches())) {
-                String aName = getName(a.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll("\\.jar", ""));
-                String bName = getName(b.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll("\\.jar", ""));
+            if (!emptyPatches) {
+                String aName = getName(a.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
+                String bName = getName(b.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
                 // sorting based on provided ordered list of patches
                 int aIndex = configProperties.getPatches().indexOf(aName);
                 int bIndex = configProperties.getPatches().indexOf(bName);
@@ -534,7 +535,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     private ClassLoader buildContainerClassloader() {
         URLClassLoader springClassLoader = (URLClassLoader)this.getClass().getClassLoader();
         URL[] libs = Stream.of(springClassLoader.getURLs()).filter(u -> {
-            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll("\\.jar", ""));
+            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
             // remove provided MULE patches/libs from classloader
             if (!CollectionUtils.isEmpty(configProperties.getPatches()) && configProperties.getPatches().stream()
                                                                                .anyMatch(
