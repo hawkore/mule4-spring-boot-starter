@@ -36,7 +36,7 @@ Build `spring-boot-mule4-runtime-ce`:
 
 ``` bash
 cd spring-boot-mule4-runtime-ce
-mvn clean package
+mvn clean package -Dmule.bom.version=4.2.2-hf5
 ```
 
 Run Sample Mule application:
