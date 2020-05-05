@@ -115,4 +115,4 @@ On production, mule runtimes should run as "client nodes".
 
 ### Distributed computation power into Mule 4
  
-If you want to take full distributed computation power into your Mule's applications, check [Apache Ignite Connector for Mule 4](https://www.hawkore.com/plugins/product/pl-g-big-data/pl-t-ignite/pl-p-ignitev4) for more details.
+If you want to take full distributed computation power into your Mule's applications, check [Apache Ignite Connector for Mule 4](https://blog.hawkore.com/2020/04/27/apache-ignite-connector-mule-starting/) for more details.
