@@ -78,7 +78,7 @@ Open your browser [http://localhost:8081/console](http://localhost:8081/console)
 
     ``` bash
     cd spring-boot-mule4-runtime-ce
-    mvn clean install -Pdocker
+    mvn clean install -Pdocker -Dmule.bom.version=4.2.2-hf5
     ```
 
 4. Run [sample docker compose](sample-docker-compose.yml):
@@ -106,7 +106,7 @@ Build and run `spring-boot-mule4-runtime-ce` with Hawkore's cluster core extensi
 
 ``` bash
 cd spring-boot-mule4-runtime-ce
-mvn clean package -Phk-cluster-ext
+mvn clean package -Phk-cluster-ext -Dmule.bom.version=4.2.2-hf5
 java -Dmule.base=./test/mule -Dmule.ignite.cluster.configfile=[FULL PATH TO MULE BASE]/conf/ignite-mule-config-local-test.xml -jar target/spring-boot-mule4-runtime-ce-4.2.2.jar
 ```
 
