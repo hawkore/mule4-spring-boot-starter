@@ -19,7 +19,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.hawkore.springframework.boot</groupId>
   <artifactId>mule4-spring-boot-starter</artifactId>
-  <version>1.0.3-SNAPSHOT</version>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Spring Boot Starter for Mule 4</name>
   <description>A 'Bootiful' approach to run Mule 4 embedded into a Spring Boot application</description>
@@ -69,8 +69,8 @@ limitations under the License.
     <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
     <maven-sufire-plugin.version>2.12.4</maven-sufire-plugin.version>
 
-    <!-- Mule Runtime Version -->
-    <mule.version>4.2.2</mule.version>
+    <!-- Default Mule Runtime BOM Version -->
+    <mule.bom.version>4.2.2-hf5</mule.bom.version>
 
     <spring-boot.version>2.1.4.RELEASE</spring-boot.version>
     <license.file>./LICENSE</license.file>

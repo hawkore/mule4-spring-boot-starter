@@ -1,15 +1,15 @@
 ## Build Spring Boot Mule 4 Runtime CE
 
-Build Spring Boot application:
+Build, with Mule Runtime BOM version 4.2.2-hf5:
 
 ``` bash
-mvn clean package
-```
+mvn clean package -Dmule.bom.version=4.2.2-hf5
+````
 
-Build Spring Boot application into a docker image:
+Install docker image, with Mule Runtime BOM version 4.2.2-hf5:
 
 ``` bash
-mvn clean package -Pdocker
+mvn clean install -Pdocker -Dmule.bom.version=4.2.2-hf5
 ```
 
 Run sample Mule application:

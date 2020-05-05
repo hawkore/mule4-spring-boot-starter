@@ -22,6 +22,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLStreamHandler;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -393,43 +394,34 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             if (configProperties.isSimpleLog()) {
                 setProperty(MuleSystemProperties.MULE_SIMPLE_LOG, "true");
             }
-
             // ensure required folders exist
             getMuleBaseFolder().mkdirs();
             getConfFolder().mkdirs();
             getLogFolder().mkdirs();
 
             if (configProperties.isCleanStartup()) {
-                LOGGER.info("Clean-up artifact forders before run Mule Runtime ...");
+                LOGGER.info("Cleaning-up artifact forders before start Mule Runtime ...");
                 StorageUtils.cleanUpFolder(getAppsFolder());
                 StorageUtils.cleanUpFolder(getDomainsFolder());
             }
-
             getDomainsFolder().mkdirs();
             getDomainFolder("default").mkdirs();
             getAppsFolder().mkdirs();
-
             // extract Mule services as they must be loaded from local file system (Mule Runtime requirement).
             // We will do it always to allow update Mule runtime version on an existing mule forder.
             installOrUpgradeServices();
-
             // extract Mule server plugins as they must be loaded from local file system (Mule Runtime requirement).
             // We will do it always to allow update Mule runtime version on an existing mule forder.
             installOrUpgradeServerPlugins();
-
             muleContainer = new MuleContainer(new String[0]);
-            // Create a composite classloader to avoid loading mule services from classloader.
-            // Services must be loaded from local file system by Mule Runtime (Mule Runtime requirement)
-            containerClassLoader = new CompositeClassLoader(this.getClass().getClassLoader(), null,
-                s -> s.startsWith("org.mule.service.") || s.startsWith("com.mulesoft.service."), null, null);
-
+            // Create a composite classloader to avoid loading mule services or patches from container classloader.
+            containerClassLoader = new CompositeClassLoader(buildContainerClassloader());
             // Create a high priority patches classloader to ensure those patches take precedence over rest of
             // classes/resources
-            ClassLoader patchesClassLoader = getPatchesClassloader();
+            ClassLoader patchesClassLoader = buildPatchesClassloader();
             if (patchesClassLoader != null) {
                 containerClassLoader = new CompositeClassLoader(patchesClassLoader, containerClassLoader);
             }
-
             // Start Mule Runtime container, do not register shutdown hook since it will try to kill the JVM
             executeWithinClassLoader(containerClassLoader, () -> muleContainer.start(false));
         } catch (Exception e) {
@@ -487,13 +479,14 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     }
 
     // load mule patches URLs from classloader
-    private ClassLoader getPatchesClassloader() {
-        if (CollectionUtils.isEmpty(configProperties.getPatches())) {
-            return null;
-        }
-        if (LOGGER.isDebugEnabled()) {
-            configProperties.getPatches()
-                .forEach(p -> LOGGER.debug("[getPatchesClassloader] -> patch with high precedence {} ", p));
+    private ClassLoader buildPatchesClassloader() {
+        List<String> patchNames = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(configProperties.getPatches())) {
+            if (LOGGER.isDebugEnabled()) {
+                configProperties.getPatches().forEach(
+                    p -> LOGGER.debug("[getPatchesClassloader] -> provided patch name with high priority {} ", p));
+            }
+            patchNames.addAll(configProperties.getPatches());
         }
         URLClassLoader springClassLoader = (URLClassLoader)this.getClass().getClassLoader();
         URL[] patches = Stream.of(springClassLoader.getURLs()).filter(u -> {
@@ -501,8 +494,34 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("[getPatchesClassloader] -> dependency name to filter found on classloader {} ", depName);
             }
-            return configProperties.getPatches().stream().anyMatch(p -> p.trim().equals(depName));
+            if (configProperties.isAutoLoadPatches() && (depName.startsWith("MULE-") || depName.startsWith("SE-"))) {
+                LOGGER.info(
+                    "{} dependency seems to be a MULE PATCH. Will be auto-loaded into high priority class loader!",
+                    depName);
+                return true;
+            }
+            if (patchNames.stream().anyMatch(p -> p.trim().equals(depName))) {
+                patchNames.remove(depName);
+                return true;
+            }
+            return false;
+        }).sorted((a, b) -> {
+            if (!CollectionUtils.isEmpty(configProperties.getPatches())) {
+                String aName = getName(a.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll("\\.jar", ""));
+                String bName = getName(b.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll("\\.jar", ""));
+                // sorting based on provided ordered list of patches
+                int aIndex = configProperties.getPatches().indexOf(aName);
+                int bIndex = configProperties.getPatches().indexOf(bName);
+                return Integer.compare(aIndex, bIndex);
+            }
+            // default no sort
+            return 0;
         }).toArray(URL[]::new);
+        // warn not found provided patches
+        for (String u : patchNames) {
+            LOGGER.warn("Provided patch name {} was not found on classloader. Consider to remove it from provided 'mule"
+                            + ".paches' property", u);
+        }
         if (patches.length == 0) {
             return null;
         }
@@ -510,6 +529,37 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             LOGGER.info("Loaded patch dependency {} into high priority classloader ", u.getPath());
         }
         return new URLClassLoader(patches);
+    }
+
+    private ClassLoader buildContainerClassloader() {
+        URLClassLoader springClassLoader = (URLClassLoader)this.getClass().getClassLoader();
+        URL[] libs = Stream.of(springClassLoader.getURLs()).filter(u -> {
+            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll("\\.jar", ""));
+            // remove provided MULE patches/libs from classloader
+            if (!CollectionUtils.isEmpty(configProperties.getPatches()) && configProperties.getPatches().stream()
+                                                                               .anyMatch(
+                                                                                   p -> p.trim().equals(depName))) {
+                return false;
+            }
+            // Services must be loaded from local file system by Mule Runtime (Mule Runtime requirement)
+            if (depName.endsWith("-mule-service")) {
+                return false;
+            }
+            // remove auto-loaded MULE patches from container classloader
+            if (depName.startsWith("MULE-") || depName.startsWith("SE-")) {
+                if (configProperties.isAutoLoadPatches()) {
+                    // will be auto-loaded into high priority class loader
+                    return false;
+                } else {
+                    LOGGER.warn("{} seems to be a MULE PATCH. Consider to enable auto-load patches ('mule"
+                                    + ".autoLoadPatches=true') or to add this patch name to 'mule"
+                                    + ".patches' property in order to load it into high priority classloader!",
+                        depName);
+                }
+            }
+            return true;
+        }).toArray(URL[]::new);
+        return new URLClassLoader(libs);
     }
 
     protected synchronized void deployArtifact(DeploymentTask deploymentTask,
