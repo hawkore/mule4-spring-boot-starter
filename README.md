@@ -234,7 +234,7 @@ For some Mule CE versions, MuleSoft does not release the Mule Runtime BOM. To so
         ```
 
 ## License
-Copyright 2020 HAWKORE, S.L.
+Copyright 2020 [HAWKORE, S.L.](https://www.hawkore.com)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
