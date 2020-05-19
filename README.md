@@ -46,6 +46,7 @@ This will allow you to build highly productive and easily scalable systems with 
 - **Manage Mule artifacts** (applications/domains), exposing Mule deployment services through Spring Boot REST controllers, as a stand-alone instance.
 - **Easy deployment of Mule applications as micro-services** on Kubernetes or another container management platform.
 - **Deploy** Mule artifacts stored in an **external repository**, see `mule.apps` and `mule.domains` properties in [Configuration](#configuration) section.
+- **Improve CI/CD**, building **docker images within seconds** containing **the latest Mule Runtime version** and **deploying your Mule Applications** on a container management platform, for example **Kubernetes**, to test integrations before deploying them to production. 
 - ...
 
 ### Prerequisites
