@@ -115,11 +115,12 @@ public class SpringBootMule4RuntimeStopStartCleanStartupTestCases extends Abstra
         Assert.assertNotNull(muleRuntimeHealthIndicator);
         Health health = muleRuntimeHealthIndicator.health();
         Assert.assertTrue(health.getStatus().equals(Status.DOWN));
+        Assert.assertFalse(container.isRunning());
         // sent start signal
         container.start();
         //  status UP
         Assert.assertTrue(muleRuntimeHealthIndicator.health().getStatus().equals(Status.UP));
-
+        Assert.assertTrue(container.isRunning());
         // list domains
         list = mockMvc.perform(
             MockMvcRequestBuilders.get(ENDPOINT_CONTEXT + ENDPOINT_DOMAINS).accept(MediaType.APPLICATION_JSON))

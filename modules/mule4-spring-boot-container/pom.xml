@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <groupId>org.hawkore.springframework.boot</groupId>
     <artifactId>mule4-spring-boot-starter</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -150,7 +150,7 @@ limitations under the License.
     <dependency>
       <groupId>org.mule.distributions</groupId>
       <artifactId>mule-runtime-impl-bom</artifactId>
-      <version>${mule.bom.version}</version>
+      <version>${mule.build.bom.version}</version>
       <type>pom</type>
       <scope>provided</scope>
     </dependency>
@@ -160,6 +160,12 @@ limitations under the License.
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.vaadin.external.google</groupId>
+          <artifactId>android-json</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -172,6 +178,33 @@ limitations under the License.
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-loader</artifactId>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Required by Mule's APIKit -->
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+      <version>${projectReactor.test.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.projectreactor.addons</groupId>
+      <artifactId>reactor-extra</artifactId>
+      <version>${projectReactorExtra.test.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>io.projectreactor</groupId>
+          <artifactId>reactor-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
   </dependencies>

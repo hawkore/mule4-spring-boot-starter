@@ -17,8 +17,8 @@
     <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
     <maven.deploy.skip>true</maven.deploy.skip>
     <maven.install.skip>true</maven.install.skip>
-    <spring-boot.version>2.2.2.RELEASE</spring-boot.version>
-    <spring-admin-server.version>2.2.2</spring-admin-server.version>
+    <spring-boot.version>2.7.4</spring-boot.version>
+    <spring-admin-server.version>2.7.6</spring-admin-server.version>
   </properties>
 
   <build>
@@ -114,6 +114,25 @@
   <dependencies>
 
     <!-- Spring boot -->
+
+    <!--	Parameter names	-->
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-parameter-names</artifactId>
+    </dependency>
+
+    <!--	Java 8 Date/time	-->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+    </dependency>
+
+    <!--	Java 8 Datatypes	-->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>de.codecentric</groupId>
       <artifactId>spring-boot-admin-starter-server</artifactId>

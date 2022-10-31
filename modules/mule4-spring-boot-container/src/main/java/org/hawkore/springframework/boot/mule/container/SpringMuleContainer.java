@@ -135,4 +135,10 @@ public interface SpringMuleContainer extends ApplicationListener<ApplicationEven
      */
     void undeployDomain(String domain) throws IOException;
 
+    /**
+     * Whether Mule is running.
+     *
+     * @return the boolean
+     */
+    boolean isRunning();
 }
