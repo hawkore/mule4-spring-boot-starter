@@ -51,6 +51,12 @@ public class MuleRuntimeHealthIndicator extends AbstractHealthIndicator {
     @Override
     protected void doHealthCheck(Health.Builder builder) throws Exception {
         try {
+
+            if (!muleContainer.isRunning()) {
+                builder.down();
+                return;
+            }
+
             boolean failed = muleContainer.getApplications().stream().anyMatch(a -> !a.isDeployed()) ||
                                  //domains
                                  muleContainer.getDomains().stream().anyMatch(a -> !a.isDeployed());

@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.hawkore.springframework.boot</groupId>
   <artifactId>spring-boot-mule4-runtime-ce</artifactId>
-  <version>4.2.2</version>
+  <version>4.4.0</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -20,10 +20,10 @@
     <mule4-spring-boot-starter.version>2.0.1-SNAPSHOT</mule4-spring-boot-starter.version>
 
     <!-- spring-boot-admin-client to register at spring boot admin server-->
-    <spring-boot-admin-client.version>2.1.6</spring-boot-admin-client.version>
+    <spring-boot-admin-client.version>2.7.6</spring-boot-admin-client.version>
 
     <!-- Should match with Mule's one to avoid incompatibilities -->
-    <spring-boot.version>2.1.6.RELEASE</spring-boot.version>
+    <spring-boot.version>2.7.4</spring-boot.version>
     <projectReactorVersion>3.2.12.RELEASE</projectReactorVersion>
     <projectReactorExtraVersion>3.1.6.RELEASE</projectReactorExtraVersion>
 
@@ -80,11 +80,11 @@
       </activation>
       <properties>
         <!-- Apache Ignite Version -->
-        <ignite.version>2.7.6</ignite.version>
+        <ignite.version>2.8.1</ignite.version>
         <h2.ignite.database.version>1.4.197</h2.ignite.database.version>
         <!-- Hawkore's cluster core extension from Mule 4 -->
         <hk.core.extension.version>4.1.3</hk.core.extension.version>
-        <hk.ignite.version>2.7.6-hk</hk.ignite.version>
+        <hk.ignite.version>2.8.1-hk</hk.ignite.version>
         <muleProductExt>-hk</muleProductExt>
       </properties>
       <dependencies>
@@ -180,6 +180,11 @@
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-starter-tomcat</artifactId>
         </exclusion>
+        <!-- OPTIONAL: exclude logback-SLF4J org.springframework.boot:spring-boot-starter-logging -->
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-logging</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -200,11 +205,35 @@
       <version>${spring-boot-admin-client.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.jolokia</groupId>
+      <artifactId>jolokia-core</artifactId>
+    </dependency>
+
     <!-- Spring boot starter for Mule 4 Runtime CE -->
     <dependency>
       <groupId>org.hawkore.springframework.boot</groupId>
       <artifactId>mule4-spring-boot-starter-ce</artifactId>
       <version>${mule4-spring-boot-starter.version}</version>
+      <exclusions>
+        <!-- OPTIONAL: exclude log4j-SLF4J from org.mule.runtime:mule-module-logging-->
+<!--        <exclusion>-->
+<!--          <groupId>org.slf4j</groupId>-->
+<!--          <artifactId>slf4j-ext</artifactId>-->
+<!--        </exclusion>-->
+<!--        <exclusion>-->
+<!--          <groupId>org.slf4j</groupId>-->
+<!--          <artifactId>jcl-over-slf4j</artifactId>-->
+<!--        </exclusion>-->
+<!--        <exclusion>-->
+<!--          <groupId>org.apache.logging.log4j</groupId>-->
+<!--          <artifactId>log4j-slf4j-impl</artifactId>-->
+<!--        </exclusion>-->
+<!--        <exclusion>-->
+<!--          <groupId>org.apache.logging.log4j</groupId>-->
+<!--          <artifactId>log4j-slf4j-impl</artifactId>-->
+<!--        </exclusion>-->
+      </exclusions>
     </dependency>
 
     <!-- Required by Mule's APIKit -->

@@ -69,10 +69,13 @@ limitations under the License.
     <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
     <maven-sufire-plugin.version>2.12.4</maven-sufire-plugin.version>
 
-    <!-- Default Mule Runtime BOM Version -->
-    <mule.bom.version>4.2.2-hf5</mule.bom.version>
-
+    <!-- Default Mule Runtime BOM Version for build and test -->
+    <mule.build.bom.version>4.4.0</mule.build.bom.version>
+    <!-- Default versions for testing. Should match with Mule's one to avoid incompatibilities -->
     <spring-boot.version>2.1.4.RELEASE</spring-boot.version>
+    <projectReactor.test.version>3.2.12.RELEASE</projectReactor.test.version>
+    <projectReactorExtra.test.version>3.1.6.RELEASE</projectReactorExtra.test.version>
+
     <license.file>./LICENSE</license.file>
   </properties>
 

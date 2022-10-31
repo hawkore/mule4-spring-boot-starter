@@ -38,7 +38,7 @@ limitations under the License.
   </scm>
 
   <properties>
-    <mule.bom.version>4.2.2</mule.bom.version>
+    <mule.bom.version>${mule.build.bom.version}</mule.bom.version>
     <gpg.skip>false</gpg.skip>
     <license.file>../../LICENSE</license.file>
   </properties>

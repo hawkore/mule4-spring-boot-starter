@@ -53,7 +53,7 @@ This will allow you to build highly productive and easily scalable systems with 
 The main dependency is JDK 8+. Tested with:
  - JDK 8, JDK 9, JDK 10 and JDK 11 on Linux/Mac/Windows
  - Spring Boot `2.1.0+`
- - Mule Runtime `4.2.1`-`4.3.0`
+ - Mule Runtime `4.2.1`-`4.4.0`
   
 #### Dependencies
 
@@ -83,13 +83,13 @@ Add **Spring Boot starter for Mule 4** dependency to your Spring Boot applicatio
 
 This starter will add Mule Runtime dependencies to your Spring Boot application using Mule Runtime BOM (Bill Of Materials) 
 specified by mandatory `-D` command line argument `mule.bom.version` at build time, 
-for example, to embed Mule Runtime 4.2.2 (+ hotfixes v2) just run `mvn clean package -Dmule.bom.version=4.2.2-hf2`.
+for example, to embed Mule Runtime 4.2.1 just run `mvn clean package -Dmule.bom.version=4.2.1`.
 
 Check available **Mule Runtime CE BOM** versions at [MuleSoft's public maven repository](https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-runtime-impl-bom/).
 
-Take a look at [spring-boot-mule4-runtime-ce](samples/spring-boot-mule4-runtime-ce/README.md) sample project (Mule Runtime CE 4.2.2 + hotfixes v5).
+Take a look at [spring-boot-mule4-runtime-ce](samples/spring-boot-mule4-runtime-ce/README.md) sample project (Mule Runtime CE 4.4.0).
 
-Take a look at [spring-boot-mule4-runtime-ee](samples/spring-boot-mule4-runtime-ee/README.md) sample project (Mule Runtime EE 4.3.0).
+Take a look at [spring-boot-mule4-runtime-ee](samples/spring-boot-mule4-runtime-ee/README.md) sample project (Mule Runtime EE 4.4.0).
 
 ### Expose deployment services
 Deployment services will allow you to manage Mule artifacts on a running spring-boot embedded Mule 4 Runtime:
@@ -204,7 +204,7 @@ Check `org.hawkore.springframework.boot.mule.config.MuleConfigProperties` implem
 
 #### Build fails: mule-runtime-impl-bom not found when I try to package my Spring Boot application using starter-ce
 
-For some Mule CE versions, MuleSoft does not release the Mule Runtime BOM. To solve this:
+For some Mule CE versions, MuleSoft does not release the Mule Runtime BOM to public maven repositories. To solve this:
  
 - Install Mule Runtime BOM into your local maven repository by yourself:
 
