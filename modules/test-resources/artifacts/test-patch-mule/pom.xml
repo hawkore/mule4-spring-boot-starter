@@ -13,7 +13,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <maven.deploy.skip>false</maven.deploy.skip>
+    <maven.deploy.skip>true</maven.deploy.skip>
     <maven.install.skip>false</maven.install.skip>
   </properties>
 
