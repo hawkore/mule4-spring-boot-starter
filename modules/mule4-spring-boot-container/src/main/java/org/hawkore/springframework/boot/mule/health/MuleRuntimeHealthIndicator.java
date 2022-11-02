@@ -32,8 +32,7 @@ public class MuleRuntimeHealthIndicator extends AbstractHealthIndicator {
     /**
      * Instantiates a new Mule runtime health indicator.
      *
-     * @param muleContainer
-     *     the mule container
+     * @param muleContainer the mule container
      */
     public MuleRuntimeHealthIndicator(SpringMuleContainer muleContainer) {
         super();
@@ -43,41 +42,35 @@ public class MuleRuntimeHealthIndicator extends AbstractHealthIndicator {
     /**
      * Do health check.
      *
-     * @param builder
-     *     the builder
-     * @throws Exception
-     *     the exception
+     * @param builder the builder
+     * @throws Exception the exception
      */
     @Override
     protected void doHealthCheck(Health.Builder builder) throws Exception {
-        try {
-
-            if (!muleContainer.isRunning()) {
-                builder.down();
-                return;
-            }
-
-            boolean failed = muleContainer.getApplications().stream().anyMatch(a -> !a.isDeployed()) ||
-                                 //domains
-                                 muleContainer.getDomains().stream().anyMatch(a -> !a.isDeployed());
-
-            if (failed) {
-                builder.outOfService();
-            } else {
-                builder.up();
-            }
-
-            builder.withDetail("Version:", MuleManifest.getProductName() + " v" + MuleManifest.getProductVersion());
-            builder.withDetail("Build:", MuleManifest.getBuildNumber());
-
-            muleContainer.getDomains().stream()
-                .forEach(a -> builder.withDetail("DOMAIN: " + a.getName(), a.getStatus()));
-
-            muleContainer.getApplications().stream()
-                .forEach(a -> builder.withDetail("APP: " + a.getName(), a.getStatus()));
-        } catch (Exception e) {
-            builder.down(e);
+        if (!muleContainer.isRunning()) {
+            builder.down();
+            return;
         }
+
+        boolean failed = muleContainer.getApplications().stream().anyMatch(a -> !a.isDeployed()) ||
+            //domains
+            muleContainer.getDomains().stream().anyMatch(a -> !a.isDeployed());
+
+        if (failed) {
+            builder.outOfService();
+        }
+        else {
+            builder.up();
+        }
+
+        builder.withDetail("Version:", MuleManifest.getProductName() + " v" + MuleManifest.getProductVersion());
+        builder.withDetail("Build:", MuleManifest.getBuildNumber());
+
+        muleContainer.getDomains().stream()
+            .forEach(a -> builder.withDetail("DOMAIN: " + a.getName(), a.getStatus()));
+
+        muleContainer.getApplications().stream()
+            .forEach(a -> builder.withDetail("APP: " + a.getName(), a.getStatus()));
     }
 
 }

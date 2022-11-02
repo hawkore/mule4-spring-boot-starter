@@ -181,8 +181,16 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.hawkore.samples</groupId>
+      <artifactId>MULE-PATCH-TEST</artifactId>
+      <version>1.0.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hawkore.samples</groupId>
+      <artifactId>SE-PATCH-TEST</artifactId>
+      <version>1.0.0</version>
       <scope>test</scope>
     </dependency>
 

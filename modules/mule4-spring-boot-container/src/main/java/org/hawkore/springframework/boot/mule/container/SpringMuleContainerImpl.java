@@ -355,14 +355,13 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
 
     protected synchronized void stop() {
         running.set(false);
-        if (started.getAndSet(false)) {
-            if (muleContainer != null) {
-                executeWithinClassLoader(containerClassLoader, () -> {
-                    LOGGER.info("Stopping Mule Runtime ...");
-                    muleContainer.stop();
-                    muleContainer.getContainerClassLoader().dispose();
-                });
-            }
+        started.set(false);
+        if (muleContainer != null) {
+            executeWithinClassLoader(containerClassLoader, () -> {
+                LOGGER.info("Stopping Mule Runtime ...");
+                muleContainer.stop();
+                muleContainer.getContainerClassLoader().dispose();
+            });
         }
     }
 
@@ -373,6 +372,16 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     private void checkRunning() {
         if (!running.get()) {
             throw new IllegalStateException("Unable to process request, Mule Runtime is not running!!");
+        }
+    }
+
+    protected void setEmbeddedMode(MuleContainer muleContainer) {
+        try {
+            //MULE 4.4.0 embedded mode compatibility
+            muleContainer.getClass().getMethod("setEmbeddedMode", boolean.class).invoke(muleContainer, true);
+        }
+        catch (Exception e) {
+            // just ignore it for MULE version < 4.4.0
         }
     }
 
@@ -417,12 +426,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             // We will do it always to allow update Mule runtime version on an existing mule forder.
             installOrUpgradeServerPlugins();
             muleContainer = new MuleContainer(new String[0]);
-            try {
-                //MULE 4.4.0 embedded mode compatibility
-                muleContainer.getClass().getMethod("setEmbeddedMode", boolean.class).invoke(muleContainer, true);
-            } catch (Exception e){
-                // just ignore it
-            }
+            setEmbeddedMode(muleContainer);
             // Create a composite classloader to avoid loading mule services or patches from container classloader.
             containerClassLoader = new CompositeClassLoader(buildContainerClassloader());
             // Create a high priority patches classloader to ensure those patches take precedence over rest of
@@ -624,7 +628,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
                 }
             }
         }
-        catch (Throwable e) {
+        catch (Exception e) {
             throw new DeployArtifactException("Unable to deploy mule applications at startup!", e);
         }
     }
@@ -647,7 +651,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
                 }
             }
         }
-        catch (Throwable e) {
+        catch (Exception e) {
             throw new DeployArtifactException("Unable to deploy mule domains at startup!", e);
         }
     }

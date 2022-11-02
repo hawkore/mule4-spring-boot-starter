@@ -78,7 +78,8 @@ public class SpringBootMule4ShutdownTestCases extends AbstractSpringTest {
     public void muleAplicationListKO() throws Exception {
         // ensure stopped Mule container to cause error when consuming deployment services
         container.stop();
-
+        // just test catched exception
+        container.setEmbeddedMode(null);
         // list applications
         MvcResult list = mockMvc.perform(
             MockMvcRequestBuilders.get(ENDPOINT_CONTEXT + ENDPOINT_APPLICATIONS).accept(MediaType.APPLICATION_JSON))
