@@ -1,0 +1,47 @@
+#%RAML 1.0
+title: Sample API
+baseUri: http://localhost:8081/api
+
+/echo:
+  get:
+    responses:
+      200:
+        body:
+          application/json:
+             example: |
+              {"message": "echo!!" }
+      400:
+        body:
+          application/json:
+             example: |
+              {"message": "error message" }
+      404:
+        body:
+          application/json:
+             example: |
+              {"message": "error message" }
+      405:
+        body:
+          application/json:
+             example: |
+              {"message": "error message" }
+      406:
+        body:
+          application/json:
+             example: |
+              {"message": "error message" }
+      415:
+        body:
+          application/json:
+             example: |
+              {"message": "error message" }
+      500:
+        body:
+          application/json:
+             example: |
+              {"message": "error message" }
+      501:
+        body:
+          application/json:
+             example: |
+              {"message": "error message" }

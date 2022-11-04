@@ -23,13 +23,18 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLStreamHandler;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hawkore.springframework.boot.mule.config.MuleConfigProperties;
 import org.hawkore.springframework.boot.mule.controller.dto.Application;
 import org.hawkore.springframework.boot.mule.controller.dto.Domain;
@@ -48,8 +53,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -96,7 +101,11 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     /**
      * Regular expression to remove jar extension
      */
-    private static final String JAR_EXTENSION = "\\.jar";
+    private static final String JAR_EXTENSION_PATTERN = "\\.jar";
+    private static final String JAR_EXTENSION = ".jar";
+    private static final String MULE_SERVICE_SUFFIX = "-mule-service";
+    private static final String MULE_DOMAIN_SUFFIX = "-mule-domain";
+    private static final String MULE_APPLICATION_SUFFIX = "-mule-application";
     /**
      * The Config properties.
      */
@@ -118,7 +127,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
         if (event instanceof ContextRefreshedEvent) {
             start();
         }
-        else if (event instanceof ContextClosedEvent || event instanceof ContextStoppedEvent) {
+        else if (event instanceof ContextClosedEvent) {
             stop();
         }
     }
@@ -347,22 +356,27 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             throw new IllegalStateException("Unable to start Mule Runtime", e);
         }
         // ORDER MATTERS!!
-        // First: deploy domains found on mule.domains property
+        // 1. deploy domains found on mule.domains property
         deployMuleDomains();
-        // Second: deploy applications found on mule.apps property
+        // 2. deploy applications found on mule.apps property
         deployMuleApplications();
     }
 
     protected synchronized void stop() {
         running.set(false);
-        started.set(false);
-        if (muleContainer != null) {
-            executeWithinClassLoader(containerClassLoader, () -> {
-                LOGGER.info("Stopping Mule Runtime ...");
-                muleContainer.stop();
-                muleContainer.getContainerClassLoader().dispose();
-            });
+        try {
+            if (muleContainer != null) {
+                executeWithinClassLoader(containerClassLoader, () -> {
+                    LOGGER.info("Stopping Mule Runtime ...");
+                    muleContainer.stop();
+                    muleContainer.getContainerClassLoader().dispose();
+                });
+            }
         }
+        finally {
+            started.set(false);
+        }
+
     }
 
     protected ClassLoader containerClassLoader() {
@@ -371,7 +385,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
 
     private void checkRunning() {
         if (!running.get()) {
-            throw new IllegalStateException("Unable to process request, Mule Runtime is not running!!");
+            throw new IllegalStateException("Unable to process request, Mule Runtime is not running!");
         }
     }
 
@@ -398,7 +412,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             setProperty("log4j2.disable.jmx", "true");
 
             if (configProperties.getBase() == null) {
-                throw new IllegalArgumentException("mule.base must be provided!!");
+                throw new IllegalArgumentException("mule.base must be provided!");
             }
 
             setProperty(MULE_HOME_DIRECTORY_PROPERTY, configProperties.getBase().toURI().getPath());
@@ -439,7 +453,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             executeWithinClassLoader(containerClassLoader, () -> muleContainer.start(false));
         }
         catch (Exception e) {
-            throw new IllegalStateException("Unable to start Mule Runtime container!!", e);
+            throw new IllegalStateException("Unable to start Mule Runtime container!", e);
         }
     }
 
@@ -504,14 +518,19 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             patchNames.addAll(configProperties.getPatches());
         }
         URLClassLoader springClassLoader = (URLClassLoader)this.getClass().getClassLoader();
+        String[] patchesPrefix = Optional.ofNullable(configProperties.getPatchesPrefix())
+            .orElse(Collections.emptyList()).stream().toArray(String[]::new);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("[patchesPrefix] -> patches prefix {} ", Arrays.toString(patchesPrefix));
+        }
         URL[] patches = Stream.of(springClassLoader.getURLs()).filter(u -> {
-            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
+            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION_PATTERN, ""));
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("[getPatchesClassloader] -> dependency name to filter found on classloader {} ", depName);
             }
-            if (configProperties.isAutoLoadPatches() && (depName.startsWith("MULE-") || depName.startsWith("SE-"))) {
+            if (configProperties.isAutoLoadPatches() && StringUtils.startsWithAny(depName, patchesPrefix)){
                 LOGGER.info(
-                    "{} dependency seems to be a MULE PATCH. Will be auto-loaded into high priority class loader!",
+                    "{} dependency seems to be a MULE PATCH. Will be auto-loaded into high priority class loader",
                     depName);
                 patchNames.remove(depName);
                 return true;
@@ -519,8 +538,8 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             return patchNames.remove(depName);
         }).sorted((a, b) -> {
             if (!emptyPatches) {
-                String aName = getName(a.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
-                String bName = getName(b.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
+                String aName = getName(a.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION_PATTERN, ""));
+                String bName = getName(b.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION_PATTERN, ""));
                 // sorting based on provided ordered list of patches
                 int aIndex = configProperties.getPatches().indexOf(aName);
                 int bIndex = configProperties.getPatches().indexOf(bName);
@@ -545,8 +564,10 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
 
     private ClassLoader buildContainerClassloader() {
         URLClassLoader springClassLoader = (URLClassLoader)this.getClass().getClassLoader();
+        String[] patchesPrefix = Optional.ofNullable(configProperties.getPatchesPrefix())
+            .orElse(Collections.emptyList()).stream().toArray(String[]::new);
         URL[] libs = Stream.of(springClassLoader.getURLs()).filter(u -> {
-            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
+            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION_PATTERN, ""));
             // remove provided MULE patches/libs from classloader
             if (!CollectionUtils.isEmpty(configProperties.getPatches()) && configProperties.getPatches().stream()
                 .anyMatch(
@@ -554,11 +575,31 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
                 return false;
             }
             // Services must be loaded from local file system by Mule Runtime (Mule Runtime requirement)
-            if (depName.endsWith("-mule-service")) {
+            if (depName.endsWith(MULE_SERVICE_SUFFIX)) {
+                return false;
+            }
+            // remove Mule Domains from classpath whether present, must be loaded as resource
+            if (depName.endsWith(MULE_DOMAIN_SUFFIX)) {
+                LOGGER.error("{} within classpath seems to be a MULE domain. " +
+                        "Please, remove it as direct dependency and add it as resource. " +
+                        "After that, if your want to deploy it, consider to enable auto-deploy mule artifacts ('mule"
+                        + ".autoDeployArtifacts=true') or to add this file name to 'mule"
+                        + ".domains' property",
+                    getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "")));
+                return false;
+            }
+            // remove Mule Applications from classpath whether present, must be loaded as resource
+            if (depName.endsWith(MULE_APPLICATION_SUFFIX)) {
+                LOGGER.error("{} within classpath seems to be a MULE application. " +
+                        "Please, remove it as direct dependency and add it as resource. " +
+                        "After that, if your want to deploy it, consider to enable auto-deploy mule artifacts ('mule"
+                        + ".autoDeployArtifacts=true') or to add this file name to 'mule"
+                        + ".apps' property",
+                    getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "")));
                 return false;
             }
             // remove auto-loaded MULE patches from container classloader
-            if (depName.startsWith("MULE-") || depName.startsWith("SE-")) {
+            if (StringUtils.startsWithAny(depName, patchesPrefix)) {
                 if (configProperties.isAutoLoadPatches()) {
                     // will be auto-loaded into high priority class loader
                     return false;
@@ -566,7 +607,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
                 else {
                     LOGGER.warn("{} seems to be a MULE PATCH. Consider to enable auto-load patches ('mule"
                             + ".autoLoadPatches=true') or to add this patch name to 'mule"
-                            + ".patches' property in order to load it into high priority classloader!",
+                            + ".patches' property in order to load it into high priority classloader",
                         depName);
                 }
             }
@@ -612,19 +653,42 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
 
     private void deployMuleApplications() {
         try {
-            if (configProperties.getApps() != null) {
-                for (Resource res : configProperties.getApps()) {
-                    File f = res.isFile()
-                        ? res.getFile()
-                        : StorageUtils.storeArtifactTemp(res.getFilename(), res.getInputStream());
-                    if (!isDeployed(getAppsFolder(), f)) {
-                        deployApplication(f, null, null, null);
+            // Find mule applications within resources classpath
+            final Set<Resource> artifacts = Optional.ofNullable(configProperties.getApps()).orElse(new HashSet<>());
+
+            PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver(this.getClass().getClassLoader());
+
+            Stream.of(resourcePatternResolver.getResources("classpath*:**/*" + MULE_APPLICATION_SUFFIX + JAR_EXTENSION)).forEach(r -> {
+                if (!artifacts.stream().anyMatch(a -> getName(a.getFilename()).equals(getName(r.getFilename())))) {
+                    if (configProperties.isAutoDeployArtifacts()) {
+                        LOGGER.info("{} within resources classpath seems to be a MULE application and it will be auto-deployed",
+                            getName(r.getFilename()));
+                        // add to apps to be auto-deployed
+                        artifacts.add(r);
                     }
                     else {
-                        LOGGER.warn(
-                            "Provided Mule application '{}' already deployed. Set mule.cleanStartup=true to re-deploy"
-                                + " it when Mule starts.", getName(f.getPath()));
+                        LOGGER.warn("{} within resources classpath seems to be a MULE application but it will not be " +
+                                "auto-deployed. Consider to enable auto-deploy mule artifacts ('mule"
+                                + ".autoDeployArtifacts=true') or to add this file name to 'mule"
+                                + ".domains' property in order to deploy it!",
+                            getName(r.getFilename()));
                     }
+                }
+            });
+
+            configProperties.setApps(artifacts);
+
+            for (Resource res : configProperties.getApps()) {
+                File f = res.isFile()
+                    ? res.getFile()
+                    : StorageUtils.storeArtifactTemp(res.getFilename(), res.getInputStream());
+                if (!isDeployed(getAppsFolder(), f)) {
+                    deployApplication(f, null, null, null);
+                }
+                else {
+                    LOGGER.warn(
+                        "Provided Mule application '{}' already deployed. Set mule.cleanStartup=true to re-deploy"
+                            + " it when Mule starts.", getName(f.getPath()));
                 }
             }
         }
@@ -635,19 +699,41 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
 
     private void deployMuleDomains() {
         try {
-            if (configProperties.getDomains() != null) {
-                for (Resource res : configProperties.getDomains()) {
-                    File f = res.isFile()
-                        ? res.getFile()
-                        : StorageUtils.storeArtifactTemp(res.getFilename(), res.getInputStream());
-                    if (!isDeployed(getDomainsFolder(), f)) {
-                        deployDomain(f, null, null, null);
+            // Find mule domains within resources classpath
+            final Set<Resource> artifacts = Optional.ofNullable(configProperties.getDomains()).orElse(new HashSet<>());
+
+            PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver(this.getClass().getClassLoader());
+
+            Stream.of(resourcePatternResolver.getResources("classpath*:**/*" + MULE_DOMAIN_SUFFIX + JAR_EXTENSION)).forEach(r -> {
+                if (!artifacts.stream().anyMatch(a -> getName(a.getFilename()).equals(getName(r.getFilename())))) {
+                    if (configProperties.isAutoDeployArtifacts()) {
+                        LOGGER.info("{} within resources classpath seems to be a MULE domain and it will be auto-deployed",
+                            getName(r.getFilename()));
+                        // add to domains to be auto-deployed
+                        artifacts.add(r);
                     }
                     else {
-                        LOGGER.warn(
-                            "Provided Mule domain '{}' already deployed. Set mule.cleanStartup=true to re-deploy"
-                                + " it when Mule starts.", getName(f.getPath()));
+                        LOGGER.warn("{} within resources classpath seems to be a MULE domain but it will not be auto-deployed. Consider to enable auto-deploy mule artifacts ('mule"
+                                + ".autoDeployArtifacts=true') or to add this file name to 'mule"
+                                + ".domains' property in order to deploy it!",
+                            getName(r.getFilename()));
                     }
+                }
+            });
+
+            configProperties.setDomains(artifacts);
+
+            for (Resource res : configProperties.getDomains()) {
+                File f = res.isFile()
+                    ? res.getFile()
+                    : StorageUtils.storeArtifactTemp(res.getFilename(), res.getInputStream());
+                if (!isDeployed(getDomainsFolder(), f)) {
+                    deployDomain(f, null, null, null);
+                }
+                else {
+                    LOGGER.warn(
+                        "Provided Mule domain '{}' already deployed. Set mule.cleanStartup=true to re-deploy"
+                            + " it when Mule starts.", getName(f.getPath()));
                 }
             }
         }

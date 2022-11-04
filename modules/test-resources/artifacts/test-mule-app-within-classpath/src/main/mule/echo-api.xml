@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core"
+  xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
+  <flow name="echo-api-main">
+    <http:listener config-ref="HTTP_Listener_config" path="/api/*">
+      <http:response statusCode="#[vars.httpStatus default 200]">
+        <http:headers>#[vars.outboundHeaders default {"Content-type":'application/json'}]</http:headers>
+      </http:response>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+        <http:headers>#[vars.outboundHeaders default {"Content-type":'application/json'}]</http:headers>
+      </http:error-response>
+    </http:listener>
+    <apikit:router config-ref="echo-api-config" />
+    <error-handler>
+      <on-error-propagate type="APIKIT:BAD_REQUEST">
+        <set-payload value='#[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]' doc:name="Error payload" doc:id="cb735367-ed1a-419f-96ce-a8892f16c09d" />
+        <set-variable value="400" doc:name="httpStatus" doc:id="b5e0e382-bfc6-4a95-8a93-de840e412321"
+          variableName="httpStatus" />
+      </on-error-propagate>
+      <on-error-propagate type="APIKIT:NOT_FOUND">
+        <set-payload value='#[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]' doc:name="Error payload" doc:id="a186642c-3f0b-4cf4-bd3a-9d3e129143e7" />
+        <set-variable value="404" doc:name="httpStatus" doc:id="0e3b8ff9-7ef3-4c5d-9c24-2310624e7502"
+          variableName="httpStatus" />
+      </on-error-propagate>
+      <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+        <set-payload value='#[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]' doc:name="Error payload" doc:id="980b2597-923b-485e-8b06-e1c5d6f2448f" />
+        <set-variable value="405" doc:name="httpStatus" doc:id="7a1129c9-e705-461e-ab37-67e6095d147b"
+          variableName="httpStatus" />
+      </on-error-propagate>
+      <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+        <set-payload value='#[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]' doc:name="Error payload" doc:id="e3f7e076-9b33-41e9-a879-495edbfbd020" />
+        <set-variable value="406" doc:name="httpStatus" doc:id="0766b613-faf5-42fe-838c-6969aa082a31"
+          variableName="httpStatus" />
+      </on-error-propagate>
+      <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+        <set-payload value='#[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]' doc:name="Error payload" doc:id="8579f83f-cffc-4e88-a62e-29815c53517a" />
+        <set-variable value="415" doc:name="httpStatus" doc:id="705af0f1-8a94-4d6e-8376-779f8769df76"
+          variableName="httpStatus" />
+      </on-error-propagate>
+      <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+        <set-payload value='#[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]' doc:name="Error payload" doc:id="d92a7412-4f1d-4edc-8d21-6dffd08d1ec2" />
+        <set-variable value="501" doc:name="httpStatus" doc:id="d75915f3-6f10-4d99-81a3-4989fd4b1e9c"
+          variableName="httpStatus" />
+      </on-error-propagate>
+    </error-handler>
+  </flow>
+  <flow name="echo-api-console">
+    <http:listener config-ref="HTTP_Listener_config" path="/console/*">
+      <http:response statusCode="#[vars.httpStatus default 200]">
+        <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+      </http:response>
+      <http:error-response statusCode="#[vars.httpStatus default 500]">
+        <http:body>#[payload]</http:body>
+        <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+      </http:error-response>
+    </http:listener>
+    <apikit:console config-ref="echo-api-config" />
+    <error-handler>
+      <on-error-propagate type="APIKIT:NOT_FOUND">
+        <set-payload value='#[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]' doc:name="Error payload" doc:id="d828a9b6-3ea3-461d-95a2-8504e5f09415" />
+        <set-variable value="404" doc:name="httpStatus" doc:id="e67b7822-b21d-46fa-9b2c-dcf864bd3cde"
+          variableName="httpStatus" />
+      </on-error-propagate>
+    </error-handler>
+  </flow>
+  <flow name="get:\echo:echo-api-config">
+    <set-payload value="#[%dw 2.0
+output application/json
+---
+{
+	message:'echo!!'
+}]" doc:name="echo message" doc:id="df151028-243b-4800-837a-0232d1243e06" />
+    <logger level="INFO" message="get:\echo:echo-api-config" />
+  </flow>
+</mule>

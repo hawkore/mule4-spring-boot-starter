@@ -122,6 +122,45 @@ limitations under the License.
           <useSystemClassLoader>false</useSystemClassLoader>
         </configuration>
       </plugin>
+      <!-- For test, add apps and domains packaged into resources -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>copy</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <artifactItems>
+            <artifactItem>
+              <groupId>org.hawkore.samples</groupId>
+              <artifactId>test-mule-app-within-classpath</artifactId>
+              <classifier>mule-application</classifier>
+              <version>1.0.0</version>
+              <type>jar</type>
+              <overWrite>true</overWrite>
+              <outputDirectory>${project.build.directory}/test-classes</outputDirectory>
+            </artifactItem>
+            <artifactItem>
+              <groupId>org.hawkore.samples</groupId>
+              <artifactId>test-mule-domain-within-classpath</artifactId>
+              <classifier>mule-domain</classifier>
+              <version>1.0.0</version>
+              <type>jar</type>
+              <overWrite>true</overWrite>
+              <outputDirectory>${project.build.directory}/test-classes</outputDirectory>
+            </artifactItem>
+          </artifactItems>
+          <overWriteReleases>true</overWriteReleases>
+          <overWriteSnapshots>true</overWriteSnapshots>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
@@ -193,7 +232,6 @@ limitations under the License.
       <version>1.0.0</version>
       <scope>test</scope>
     </dependency>
-
     <!-- Required by Mule's APIKit -->
     <dependency>
       <groupId>io.projectreactor</groupId>
