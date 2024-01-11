@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <groupId>org.hawkore.springframework.boot</groupId>
     <artifactId>mule4-spring-boot-starter</artifactId>
-    <version>2.0.2</version>
+    <version>3.0.0</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -30,6 +30,8 @@ limitations under the License.
   <packaging>pom</packaging>
 
   <properties>
+    <code.coverage.project.folder>${basedir}/../</code.coverage.project.folder>
+    <code.coverage.overall.data.folder>${basedir}/target/</code.coverage.overall.data.folder>
     <license.file>../../LICENSE</license.file>
   </properties>
 
@@ -37,6 +39,16 @@ limitations under the License.
     <dependency>
       <groupId>org.hawkore.springframework.boot</groupId>
       <artifactId>mule4-spring-boot-container</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hawkore.springframework.boot</groupId>
+      <artifactId>mule4-spring-boot-container-v1-impl</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hawkore.springframework.boot</groupId>
+      <artifactId>mule4-spring-boot-container-v2-impl</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>
@@ -58,6 +70,69 @@ limitations under the License.
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>${build-helper-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/test/java</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-resource</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-test-resource</goal>
+            </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <directory>src/test/resources</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- This is required by jacoco to make the check goal work. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>${maven-resources-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>copy-class-files</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <overwrite>false</overwrite>
+              <resources>
+                <resource>
+                  <directory>../mule4-spring-boot-container/target/classes</directory>
+                </resource>
+                <resource>
+                  <directory>../mule4-spring-boot-container-v1-impl/target/classes</directory>
+                </resource>
+                <resource>
+                  <directory>../mule4-spring-boot-container-v2-impl/target/classes</directory>
+                </resource>
+              </resources>
+              <outputDirectory>${project.build.directory}/classes</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${maven-jacoco-plugin.version}</version>
@@ -68,10 +143,51 @@ limitations under the License.
             <goals>
               <goal>report-aggregate</goal>
             </goals>
+            <configuration>
+              <outputDirectory>${project.reporting.outputDirectory}/jacoco-aggregate</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>merge-results</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>merge</goal>
+            </goals>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <directory>${code.coverage.project.folder}</directory>
+                  <includes>
+                    <include>**/target/jacoco.exec</include>
+                  </includes>
+                </fileSet>
+              </fileSets>
+              <destFile>${code.coverage.overall.data.folder}/aggregate.exec</destFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>coverage-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>CLASS</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>80%</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+              <dataFile>${code.coverage.overall.data.folder}/aggregate.exec</dataFile>
+            </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
   </build>
-
 </project>

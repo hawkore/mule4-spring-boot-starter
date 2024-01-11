@@ -30,10 +30,10 @@ import java.util.zip.ZipInputStream;
 
 import org.hawkore.springframework.boot.mule.exception.DeployArtifactException;
 import org.mule.runtime.core.api.util.FileUtils;
-import org.mule.runtime.core.api.util.IOUtils;
 import org.mule.runtime.core.api.util.compression.InvalidZipFileException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,10 +79,9 @@ public class StorageUtils {
                     File file = new File(directory, entry.getName());
                     // ensure parent directory exists
                     ensureDirectoryExists(file.getParentFile());
-
-                    OutputStream os = new BufferedOutputStream(new FileOutputStream(f));
-                    copy(zip, os);
-                    IOUtils.closeQuietly(os);
+                    try (OutputStream os = new BufferedOutputStream(new FileOutputStream(f))) {
+                        copy(zip, os);
+                    }
                 }
             }
         }
@@ -138,8 +137,28 @@ public class StorageUtils {
     public static File storeArtifactTemp(MultipartFile file) {
         try {
             return storeArtifactTemp(file.getOriginalFilename(), file.getInputStream());
-        } catch (DeployArtifactException ex) {
-            throw ex;
+        } catch (Exception ex) {
+            throw new DeployArtifactException("Could not store mule artifact. Please try again!", ex);
+        }
+    }
+
+    /**
+     * Save artifact as a temporal file or return underline file.
+     *
+     * @param resource
+     *     the resource
+     * @return the file
+     */
+    public static File storeArtifactTempOrGet(Resource resource) {
+        try {
+            if (resource.isFile()) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Resource is a file {}, temporal storage is not required",
+                        resource.getFile().getAbsolutePath());
+                }
+                return resource.getFile();
+            }
+            return storeArtifactTemp(resource.getFilename(), resource.getInputStream());
         } catch (Exception ex) {
             throw new DeployArtifactException("Could not store mule artifact. Please try again!", ex);
         }
@@ -168,6 +187,9 @@ public class StorageUtils {
             Path tempPath = Files.createTempDirectory("mule_artifact");
             File aFile = new File(tempPath.toFile(), fileName);
             Files.copy(inputStream, aFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Created temporal file for '{}' at {}", fileName, aFile.getAbsolutePath());
+            }
             return aFile;
         } catch (Exception ex) {
             throw new DeployArtifactException("Could not store artifact file " + fileName + ". Please try again!", ex);

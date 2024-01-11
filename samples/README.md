@@ -36,13 +36,13 @@ Build `spring-boot-mule4-runtime-ce`:
 
 ``` bash
 cd spring-boot-mule4-runtime-ce
-mvn clean package -Dmule.bom.version=4.4.0
+mvn clean package -Dmule.bom.version=4.5.0-20220221
 ```
 
 Run Sample Mule application:
 
 ``` bash
-java -Dmule.base=./test/mule -Dmule.apps=file:../test-mule-app/target/test-mule-app-1.0.0-mule-application.jar -Dmule.cleanStartup=true -jar target/spring-boot-mule4-runtime-ce-4.4.0.jar
+java -Dmule.base=./test/mule -Dmule.apps=file:../test-mule-app/target/test-mule-app-1.0.0-mule-application.jar -Dmule.cleanStartup=true -jar target/spring-boot-mule4-runtime-ce-4.5.0.jar
 ```
 
 Open your browser [http://localhost:8882](http://localhost:8882) to access Spring Boot Admin Server:
@@ -78,7 +78,7 @@ Open your browser [http://localhost:8081/console](http://localhost:8081/console)
 
     ``` bash
     cd spring-boot-mule4-runtime-ce
-    mvn clean install -Pdocker -Dmule.bom.version=4.4.0
+    mvn clean install -Pdocker -Dmule.bom.version=4.5.0-20220221
     ```
 
 4. Run [sample docker compose](sample-docker-compose.yml):
@@ -106,8 +106,8 @@ Build and run `spring-boot-mule4-runtime-ce` with Hawkore's cluster core extensi
 
 ``` bash
 cd spring-boot-mule4-runtime-ce
-mvn clean package -Phk-cluster-ext -Dmule.bom.version=4.4.0
-java -Dmule.base=./test/mule -Dmule.ignite.cluster.configfile=[FULL PATH TO MULE BASE]/conf/ignite-mule-config-local-test.xml -jar target/spring-boot-mule4-runtime-ce-4.4.0.jar
+mvn clean package -Phk-cluster-ext -Dmule.bom.version=4.5.0-20220221
+java -Dmule.base=./test/mule -Dmule.ignite.cluster.configfile=[FULL PATH TO MULE BASE]/conf/ignite-mule-config-local-test.xml -jar target/spring-boot-mule4-runtime-ce-4.5.0.jar
 ```
 
 NOTE: For testing purposes, a "server mode" ignite configuration is used. 

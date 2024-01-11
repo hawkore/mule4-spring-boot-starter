@@ -16,8 +16,10 @@
 package org.hawkore.springframework.boot.mule.config;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
+import java.util.Set;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -34,16 +36,16 @@ public class MuleConfigProperties {
     /** Mule base directory */
     private File base;
     /** Mule domains to be deployed into Mule runtime container at start time */
-    private List<Resource> domains;
+    private Set<Resource> domains;
     /** Mule applications to be deployed into Mule runtime container at start time */
-    private List<Resource> apps;
+    private Set<Resource> apps;
     /** Mule server plugins to be deployed before Mule runtime starts */
-    private List<Resource> serverPlugins;
+    private Set<Resource> serverPlugins;
     /** Mule artifacts initialization flags */
     private boolean lazyInitializationEnabled = false;
     private boolean xmlValidationsEnabled = true;
     private boolean lazyConnectionsEnabled = true;
-    /** Enable flag simple log (global) for mule runtime logging. By default true **/
+    /** Enable flag simple log (global log file) for mule runtime logging. By default true **/
     private boolean simpleLog = true;
     /**
      * Remove deployments before start Mule Runtime. By default false.
@@ -55,9 +57,18 @@ public class MuleConfigProperties {
      */
     private List<String> patches;
     /**
-     * Auto load MULE PATCHES (dependencies starting with MULE- or SE-) into high priority classloader
+     * List of patches prefix for auto-load patches
+     */
+    private List<String> patchesPrefix = Arrays.asList("MULE-", "SE-");
+    /**
+     * Auto load MULE PATCHES (dependencies starting with provided patches prefix) into high priority classloader
      */
     private boolean autoLoadPatches = true;
+
+    /**
+     * Auto desploy Mule Artifacts (Domains and applications) found within classpath resources
+     */
+    private boolean autoDeployArtifacts = true;
 
     /**
      * Gets base.
@@ -71,8 +82,7 @@ public class MuleConfigProperties {
     /**
      * Sets base.
      *
-     * @param base
-     *     the base
+     * @param base the base
      * @return this for chaining
      */
     public MuleConfigProperties setBase(File base) {
@@ -85,18 +95,17 @@ public class MuleConfigProperties {
      *
      * @return the domains
      */
-    public List<Resource> getDomains() {
+    public Set<Resource> getDomains() {
         return domains;
     }
 
     /**
      * Sets domains.
      *
-     * @param domains
-     *     the domains
+     * @param domains the domains
      * @return this for chaining
      */
-    public MuleConfigProperties setDomains(List<Resource> domains) {
+    public MuleConfigProperties setDomains(Set<Resource> domains) {
         this.domains = domains;
         return this;
     }
@@ -106,18 +115,17 @@ public class MuleConfigProperties {
      *
      * @return the apps
      */
-    public List<Resource> getApps() {
+    public Set<Resource> getApps() {
         return apps;
     }
 
     /**
      * Sets apps.
      *
-     * @param apps
-     *     the apps
+     * @param apps the apps
      * @return this for chaining
      */
-    public MuleConfigProperties setApps(List<Resource> apps) {
+    public MuleConfigProperties setApps(Set<Resource> apps) {
         this.apps = apps;
         return this;
     }
@@ -134,8 +142,7 @@ public class MuleConfigProperties {
     /**
      * Sets lazy initialization enabled.
      *
-     * @param lazyInitializationEnabled
-     *     the lazy initialization enabled
+     * @param lazyInitializationEnabled the lazy initialization enabled
      * @return this for chaining
      */
     public MuleConfigProperties setLazyInitializationEnabled(boolean lazyInitializationEnabled) {
@@ -155,8 +162,7 @@ public class MuleConfigProperties {
     /**
      * Sets xml validations enabled.
      *
-     * @param xmlValidationsEnabled
-     *     the xml validations enabled
+     * @param xmlValidationsEnabled the xml validations enabled
      * @return this for chaining
      */
     public MuleConfigProperties setXmlValidationsEnabled(boolean xmlValidationsEnabled) {
@@ -176,8 +182,7 @@ public class MuleConfigProperties {
     /**
      * Sets lazy connections enabled.
      *
-     * @param lazyConnectionsEnabled
-     *     the lazy connections enabled
+     * @param lazyConnectionsEnabled the lazy connections enabled
      * @return this for chaining
      */
     public MuleConfigProperties setLazyConnectionsEnabled(boolean lazyConnectionsEnabled) {
@@ -197,8 +202,7 @@ public class MuleConfigProperties {
     /**
      * Sets simple log.
      *
-     * @param simpleLog
-     *     the simple log
+     * @param simpleLog the simple log
      * @return this for chaining
      */
     public MuleConfigProperties setSimpleLog(boolean simpleLog) {
@@ -218,8 +222,7 @@ public class MuleConfigProperties {
     /**
      * Sets clean startup.
      *
-     * @param cleanStartup
-     *     the clean startup
+     * @param cleanStartup the clean startup
      * @return this for chaining
      */
     public MuleConfigProperties setCleanStartup(boolean cleanStartup) {
@@ -263,8 +266,7 @@ public class MuleConfigProperties {
      * In general, you can use this property to control class/resource loading priority for Mule contrainer classloader
      * for any dependency, not only for Mule patches.
      *
-     * @param patches
-     *     the patches
+     * @param patches the patches
      * @return this for chaining
      */
     public MuleConfigProperties setPatches(List<String> patches) {
@@ -277,18 +279,17 @@ public class MuleConfigProperties {
      *
      * @return the server plugins
      */
-    public List<Resource> getServerPlugins() {
+    public Set<Resource> getServerPlugins() {
         return serverPlugins;
     }
 
     /**
      * Sets server plugins.
      *
-     * @param serverPlugins
-     *     the server plugins
+     * @param serverPlugins the server plugins
      * @return this for chaining
      */
-    public MuleConfigProperties setServerPlugins(List<Resource> serverPlugins) {
+    public MuleConfigProperties setServerPlugins(Set<Resource> serverPlugins) {
         this.serverPlugins = serverPlugins;
         return this;
     }
@@ -305,8 +306,7 @@ public class MuleConfigProperties {
     /**
      * Sets auto load patches.
      *
-     * @param autoLoadPatches
-     *     the auto load patches
+     * @param autoLoadPatches the auto load patches
      * @return this for chaining
      */
     public MuleConfigProperties setAutoLoadPatches(boolean autoLoadPatches) {
@@ -314,4 +314,43 @@ public class MuleConfigProperties {
         return this;
     }
 
+    /**
+     * Is auto deploy mule artifacts boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isAutoDeployArtifacts() {
+        return autoDeployArtifacts;
+    }
+
+    /**
+     * Sets auto deploy mule artifacts.
+     *
+     * @param autoDeployArtifacts the auto deploy mule artifacts
+     * @return this for chaining
+     */
+    public MuleConfigProperties setAutoDeployArtifacts(boolean autoDeployArtifacts) {
+        this.autoDeployArtifacts = autoDeployArtifacts;
+        return this;
+    }
+
+    /**
+     * Gets patches prefix.
+     *
+     * @return the patches prefix
+     */
+    public List<String> getPatchesPrefix() {
+        return patchesPrefix;
+    }
+
+    /**
+     * Sets patches prefix.
+     *
+     * @param patchesPrefix the patches prefix
+     * @return this for chaining
+     */
+    public MuleConfigProperties setPatchesPrefix(List<String> patchesPrefix) {
+        this.patchesPrefix = patchesPrefix;
+        return this;
+    }
 }

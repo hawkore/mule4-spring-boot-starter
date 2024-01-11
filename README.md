@@ -53,7 +53,7 @@ This will allow you to build highly productive and easily scalable systems with 
 The main dependency is JDK 8+. Tested with:
  - JDK 8, JDK 9, JDK 10 and JDK 11 on Linux/Mac/Windows
  - Spring Boot `2.1.0+`
- - Mule Runtime `4.2.1`-`4.4.0`
+ - Mule Runtime `4.2.1`-`4.5.2`
   
 #### Dependencies
 
@@ -89,7 +89,7 @@ Check available **Mule Runtime CE BOM** versions at [MuleSoft's public maven rep
 
 Take a look at [spring-boot-mule4-runtime-ce](samples/spring-boot-mule4-runtime-ce/README.md) sample project (Mule Runtime CE 4.4.0).
 
-Take a look at [spring-boot-mule4-runtime-ee](samples/spring-boot-mule4-runtime-ee/README.md) sample project (Mule Runtime EE 4.4.0).
+Take a look at [spring-boot-mule4-runtime-ee](samples/spring-boot-mule4-runtime-ee/README.md) sample project (Mule Runtime EE 4.5.2).
 
 ### Expose deployment services
 Deployment services will allow you to manage Mule artifacts on a running spring-boot embedded Mule 4 Runtime:
@@ -173,22 +173,25 @@ Take a look at the [example of distributed computation with Mule 4 and Kubernete
 The additional configuration of this starter can be provided by configuration properties - the Spring Boot way.
 All configuration properties start with `mule`. Below is a list of the main supported properties:
 
-|         Property          |             Values             | Default value |
-|:-------------------------:|:------------------------------:|:-------------:|
-| `mule.base`               |  the mule's base folder (required)      |               |
-| `mule.lazyInitializationEnabled`  |        `true`, `false`         |    `false`    |
-| `mule.xmlValidationsEnabled`  |        `true`, `false`         |    `true`    |
-| `mule.lazyConnectionsEnabled`  |        `true`, `false`         |    `true`    |
-| `mule.simpleLog`  |        `true`, `false`         |    `true`    |
-| `mule.cleanStartup`  |        `true`, `false`         |    `false`    |
-| `mule.domains`  |       comma separated mule domain file(s) to be deployed at startup        |       |
-| `mule.apps`  |        comma separated mule application file(s) to be deployed at startup        |       |
-| `mule.patches`  |        list of patches' names for Mule Runtime with high load priority        |       |
-| `mule.autoLoadPatches`  |        `true`, `false`        |  `true`     |
-| `mule.serverPlugins`  |       comma separated mule server plugins file(s) to be installed at startup        |       |
+|             Property             |                                 Values                                 | Default value |
+|:--------------------------------:|:----------------------------------------------------------------------:|:-------------:|
+|           `mule.base`            |                   the mule's base folder (required)                    |               |
+| `mule.lazyInitializationEnabled` |                            `true`, `false`                             |    `false`    |
+|   `mule.xmlValidationsEnabled`   |                            `true`, `false`                             |    `true`     |
+|  `mule.lazyConnectionsEnabled`   |                            `true`, `false`                             |    `true`     |
+|         `mule.simpleLog`         |                            `true`, `false`                             |    `true`     |
+|       `mule.cleanStartup`        |                            `true`, `false`                             |    `false`    |
+|          `mule.domains`          |     comma separated mule domain file(s) to be deployed at startup      |               |
+|           `mule.apps`            |   comma separated mule application file(s) to be deployed at startup   |               |
+|          `mule.patches`          |    list of patches' names for Mule Runtime with high load priority     |               |
+|       `mule.patchesPrefix`       |           list of patch name prefixes for auto-load patches            |  `MULE-,SE-`  |
+|      `mule.autoLoadPatches`      |                            `true`, `false`                             |    `true`     |
+|    `mule.autoDeployArtifacts`    |                            `true`, `false`                             |    `true`     |
+|       `mule.serverPlugins`       | comma separated mule server plugins file(s) to be installed at startup |               |
 
 - `mule.cleanStartup` will clean deployed apps and domains folders before starting Mule Runtime, this is useful to deploy Mule Runtime with your "updatable" Mule application as a micro-service.
-- `mule.autoLoadPatches` will auto-load MULE PATCHES (dependencies starting with `MULE-` or `SE-`) into high priority classloader.
+- `mule.autoLoadPatches` will auto-load MULE PATCHES (dependencies starting with provided patches prefixes) into high priority classloader.
+- `mule.autoDeployArtifacts` will auto-deploy apps and domains found within classpath as resources.
 - `mule.domains`, `mule.apps` and `mule.serverPlugins` are loaded using [Spring's ResourceLoader](https://docs.spring.io/spring/docs/5.1.6.RELEASE/spring-framework-reference/core.html#resources-resourceloader), so you must provide a valid URL format:
 
     |   Prefix                  | Example                        | Explanation                                 |

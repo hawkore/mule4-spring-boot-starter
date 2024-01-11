@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.hawkore.springframework.boot</groupId>
   <artifactId>spring-boot-mule4-runtime-ee</artifactId>
-  <version>4.4.0</version>
+  <version>4.5.2</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -16,17 +16,19 @@
     <maven.deploy.skip>true</maven.deploy.skip>
     <maven.install.skip>true</maven.install.skip>
 
+    <spring-boot-maven-plugin.version>2.6.4</spring-boot-maven-plugin.version>
+
     <!-- Spring boot starter for Mule -->
-    <mule4-spring-boot-starter.version>2.0.2</mule4-spring-boot-starter.version>
+    <mule4-spring-boot-starter.version>3.0.0</mule4-spring-boot-starter.version>
 
     <!-- spring-boot-admin-client to register at spring boot admin server-->
-    <spring-boot-admin-client.version>2.7.6</spring-boot-admin-client.version>
+    <spring-boot-admin-client.version>2.7.12</spring-boot-admin-client.version>
 
     <!-- Should match with Mule's one to avoid incompatibilities -->
-    <spring-boot.version>2.7.4</spring-boot.version>
-    <projectReactorVersion>3.2.12.RELEASE</projectReactorVersion>
-    <projectReactorExtraVersion>3.1.6.RELEASE</projectReactorExtraVersion>
-    <hazelcast.version>3.12.11</hazelcast.version>
+    <spring-boot.version>2.7.12</spring-boot.version>
+    <projectReactorVersion>3.4.22</projectReactorVersion>
+    <projectReactorExtraVersion>3.4.8</projectReactorExtraVersion>
+    <hazelcast.version>5.2.4</hazelcast.version>
 
     <muleProductExt></muleProductExt>
   </properties>
@@ -36,6 +38,7 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${spring-boot-maven-plugin.version}</version>
         <configuration>
           <executable>true</executable>
         </configuration>
@@ -171,7 +174,6 @@
   </profiles>
 
   <dependencies>
-
     <!-- Optional Spring Boot Web for Mule deployment services and remote management -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -194,6 +196,12 @@
       <artifactId>spring-boot-starter-undertow</artifactId>
     </dependency>
 
+    <!-- Use log4j2 spring boot module -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-log4j2</artifactId>
+    </dependency>
+
     <!-- Optional for remote management actuator + client -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -206,29 +214,22 @@
       <version>${spring-boot-admin-client.version}</version>
     </dependency>
 
-    <!-- Spring boot starter for Mule 4 Runtime EE -->
+    <dependency>
+      <groupId>org.jolokia</groupId>
+      <artifactId>jolokia-core</artifactId>
+    </dependency>
+
+    <!-- Spring boot starter for Mule 4 Runtime CE -->
     <dependency>
       <groupId>org.hawkore.springframework.boot</groupId>
       <artifactId>mule4-spring-boot-starter-ee</artifactId>
       <version>${mule4-spring-boot-starter.version}</version>
       <exclusions>
-<!-- OPTIONAL: exclude log4j-SLF4J from org.mule.runtime:mule-module-logging,  -->
-<!--        <exclusion>-->
-<!--          <groupId>org.slf4j</groupId>-->
-<!--          <artifactId>slf4j-ext</artifactId>-->
-<!--        </exclusion>-->
-<!--        <exclusion>-->
-<!--          <groupId>org.slf4j</groupId>-->
-<!--          <artifactId>jcl-over-slf4j</artifactId>-->
-<!--        </exclusion>-->
-<!--        <exclusion>-->
-<!--          <groupId>org.apache.logging.log4j</groupId>-->
-<!--          <artifactId>log4j-slf4j-impl</artifactId>-->
-<!--        </exclusion>-->
-<!--        <exclusion>-->
-<!--          <groupId>org.apache.logging.log4j</groupId>-->
-<!--          <artifactId>log4j-slf4j-impl</artifactId>-->
-<!--        </exclusion>-->
+      <!-- exclude log4j2 dependencies from org.mule.runtime:mule-module-logging -->
+        <exclusion>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 

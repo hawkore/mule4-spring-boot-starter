@@ -18,45 +18,47 @@ package org.hawkore.springframework.boot.mule.container;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLStreamHandler;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hawkore.springframework.boot.mule.config.MuleConfigProperties;
-import org.hawkore.springframework.boot.mule.controller.dto.Application;
-import org.hawkore.springframework.boot.mule.controller.dto.Domain;
 import org.hawkore.springframework.boot.mule.exception.DeployArtifactException;
 import org.hawkore.springframework.boot.mule.utils.CompositeClassLoader;
+import org.hawkore.springframework.boot.mule.utils.CompositeClassLoader.DefaultStrategy;
 import org.hawkore.springframework.boot.mule.utils.StorageUtils;
 import org.mule.runtime.api.util.MuleSystemProperties;
+import org.mule.runtime.core.api.config.MuleManifest;
 import org.mule.runtime.core.api.util.ClassUtils;
-import org.mule.runtime.deployment.model.api.application.ApplicationStatus;
 import org.mule.runtime.module.artifact.api.classloader.net.MuleUrlStreamHandlerFactory;
-import org.mule.runtime.module.launcher.MuleContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.SpringBootVersion;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.ContextStoppedEvent;
+import org.springframework.core.SpringVersion;
 import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.util.CollectionUtils;
 
 import static java.lang.String.valueOf;
+import static java.lang.System.clearProperty;
 import static java.lang.System.setProperty;
 
-import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.FilenameUtils.getName;
 import static org.mule.runtime.container.api.MuleFoldersUtil.getAppFolder;
 import static org.mule.runtime.container.api.MuleFoldersUtil.getAppsFolder;
@@ -72,31 +74,40 @@ import static org.mule.runtime.core.api.config.MuleDeploymentProperties.MULE_LAZ
 import static org.mule.runtime.core.api.config.MuleProperties.MULE_HOME_DIRECTORY_PROPERTY;
 
 /**
- * Embedded Spring Mule Container
+ * Embedded Spring Mule Container base implementation
  *
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
-@Component("SpringMuleContainer")
-@ConditionalOnClass(name = "org.mule.runtime.module.launcher.MuleContainer")
-public class SpringMuleContainerImpl implements SpringMuleContainer {
+public abstract class SpringMuleContainerImpl implements SpringMuleContainer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringMuleContainerImpl.class);
     /**
      * The constant ARTIFACT_ANCHOR_SUFFIX.
      */
-    private static final String ARTIFACT_ANCHOR_SUFFIX = "-anchor.txt";
+    public static final String ARTIFACT_ANCHOR_SUFFIX = "-anchor.txt";
     /**
      * The constant LOGS_FORDER.
      */
     private static final String LOGS_FORDER = "logs";
     /**
-     * Regular expression to remove from resources' names within spring boot executable jar
+     * Expression to remove from resources' names within spring boot executable jar
      */
-    private static final String WITHIN_JAR_REGEX = "\\!\\/";
-    /**
-     * Regular expression to remove jar extension
-     */
-    private static final String JAR_EXTENSION = "\\.jar";
+    private static final String WITHIN_JAR = "!/";
+    private static final String JAR_EXTENSION = ".jar";
+    private static final String MULE_SERVICE_SUFFIX = "-mule-service";
+    private static final String MULE_DOMAIN_SUFFIX = "-mule-domain";
+    private static final String MULE_APPLICATION_SUFFIX = "-mule-application";
+    private static final String JAR_HANDLER = "org.springframework.boot.loader.jar.Handler";
+    private static final String FILE_HANDLER = "sun.net.www.protocol.file.Handler";
+    private static final String JAR_PROTOCOL = "jar";
+    private static final String FILE_PROTOCOL = "file";
+    private static final String ALERT_MESSAGE_ARTIFACT_WITHIN_CLASSPATH =
+        "{} within classpath seems to be a MULE {}. Please, remove it as direct dependency and add it as"
+            + " resource. After that, if your want to deploy it, consider to enable auto-deploy mule artifacts "
+            + "('mule.autoDeployArtifacts=true') or to add this file name to 'mule.apps' property";
+    private static final String ALERT_MESSAGE_PATCH_WITHIN_CLASSPATH =
+        "{} seems to be a MULE PATCH. Consider to enable auto-load patches ('mule.autoLoadPatches=true') or to add "
+            + "this patch name to 'mule.patches' property in order to load it into high priority classloader";
     /**
      * The Config properties.
      */
@@ -106,53 +117,33 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     private static final AtomicBoolean started = new AtomicBoolean(false);
     private static final AtomicBoolean running = new AtomicBoolean(false);
     private ClassLoader containerClassLoader;
-    private MuleContainer muleContainer;
 
     /**
      * On application event.
      *
-     * @param event the event
+     * @param event
+     *     the event
      */
     @Override
     public void onApplicationEvent(ApplicationEvent event) {
         if (event instanceof ContextRefreshedEvent) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Starting Mule Runtime by ContextRefreshedEvent");
+            }
             start();
-        }
-        else if (event instanceof ContextClosedEvent || event instanceof ContextStoppedEvent) {
+        } else if (event instanceof ContextClosedEvent) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Stopping Mule Runtime by ContextClosedEvent");
+            }
             stop();
         }
     }
 
     /**
-     * Whether application is deployed and running.
-     *
-     * @param application the application
-     * @return the boolean
-     */
-    @Override
-    public boolean isApplicationDeployed(String application) {
-        checkRunning();
-        return Optional.ofNullable(muleContainer.getDeploymentService().findApplication(application))
-            .map(a -> ApplicationStatus.STARTED.equals(a.getStatus())).orElse(false);
-    }
-
-    /**
-     * Whether domain is deployed and running.
-     *
-     * @param domain the domain
-     * @return the boolean
-     */
-    @Override
-    public boolean isDomainDeployed(String domain) {
-        checkRunning();
-        return Optional.ofNullable(muleContainer.getDeploymentService().findDomain(domain))
-            .map(d -> new File(getDomainsFolder(), domain + ARTIFACT_ANCHOR_SUFFIX).exists()).orElse(false);
-    }
-
-    /**
      * Whether application is installed (application directory exists).
      *
-     * @param application the application
+     * @param application
+     *     the application
      * @return the boolean
      */
     @Override
@@ -164,7 +155,8 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     /**
      * Whether domain is installed (domain directory exists).
      *
-     * @param domain the domain
+     * @param domain
+     *     the domain
      * @return the boolean
      */
     @Override
@@ -174,42 +166,16 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     }
 
     /**
-     * Gets installed applications.
-     *
-     * @return the applications
-     */
-    @Override
-    public List<Application> getApplications() {
-        checkRunning();
-        return muleContainer.getDeploymentService().getApplications().stream()
-            .filter(f -> isApplicationInstalled(f.getArtifactName())).map(
-                f -> new Application().setName(f.getArtifactName()).setStatus(f.getStatus())
-                    .setLastModified(f.getLocation().lastModified())).collect(Collectors.toList());
-    }
-
-    /**
-     * Gets installed domains.
-     *
-     * @return the domains
-     */
-    @Override
-    public List<Domain> getDomains() {
-        checkRunning();
-        return muleContainer.getDeploymentService().getDomains().stream()
-            .filter(f -> isDomainInstalled(f.getArtifactName())).map(
-                f -> new Domain().setName(f.getArtifactName()).setStatus(isDomainDeployed(f.getArtifactName())
-                        ? ApplicationStatus.STARTED
-                        : ApplicationStatus.DEPLOYMENT_FAILED)
-                    .setLastModified(f.getLocation().lastModified())).collect(Collectors.toList());
-    }
-
-    /**
      * Deploy application.
      *
-     * @param appFile                   the app file
-     * @param lazyInitializationEnabled the lazy initialization enabled
-     * @param xmlValidationsEnabled     the xml validations enabled
-     * @param lazyConnectionsEnabled    the lazy connections enabled
+     * @param appFile
+     *     the app file
+     * @param lazyInitializationEnabled
+     *     the lazy initialization enabled
+     * @param xmlValidationsEnabled
+     *     the xml validations enabled
+     * @param lazyConnectionsEnabled
+     *     the lazy connections enabled
      */
     @Override
     public synchronized void deployApplication(File appFile,
@@ -221,26 +187,16 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     }
 
     /**
-     * Undeploy application.
-     *
-     * @param applicationName the application name
-     * @throws IOException the io exception
-     */
-    @Override
-    public synchronized void undeployApplication(String applicationName) throws IOException {
-        checkRunning();
-        muleContainer.getDeploymentService().undeploy(applicationName);
-        // ensure full removal from disk
-        deleteDirectory(getAppFolder(applicationName));
-    }
-
-    /**
      * Deploy domain.
      *
-     * @param domainFile                the domain file
-     * @param lazyInitializationEnabled the lazy initialization enabled
-     * @param xmlValidationsEnabled     the xml validations enabled
-     * @param lazyConnectionsEnabled    the lazy connections enabled
+     * @param domainFile
+     *     the domain file
+     * @param lazyInitializationEnabled
+     *     the lazy initialization enabled
+     * @param xmlValidationsEnabled
+     *     the xml validations enabled
+     * @param lazyConnectionsEnabled
+     *     the lazy connections enabled
      */
     @Override
     public synchronized void deployDomain(File domainFile,
@@ -256,34 +212,24 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
      *
      * @return the boolean
      */
-    @Override public boolean isRunning() {
-        return running.get();
-    }
-
-    /**
-     * Undeploy domain.
-     *
-     * @param domainName the domain name
-     */
     @Override
-    public synchronized void undeployDomain(String domainName) throws IOException {
-        checkRunning();
-        muleContainer.getDeploymentService().undeployDomain(domainName);
-        // ensure full removal from disk
-        deleteDirectory(getDomainFolder(domainName));
+    public boolean isRunning() {
+        return running.get();
     }
 
     /**
      * Interface for running deployment tasks within the container class loader.
      */
     @FunctionalInterface
-    interface DeploymentTask {
+    public interface DeploymentTask {
 
         /**
          * Deploy.
          *
-         * @param deploymentProperties the deployment properties
-         * @throws IOException the io exception
+         * @param deploymentProperties
+         *     the deployment properties
+         * @throws IOException
+         *     the io exception
          */
         void deploy(Properties deploymentProperties) throws IOException;
 
@@ -293,95 +239,77 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
      * Interface for running tasks within the container class loader.
      */
     @FunctionalInterface
-    interface ContainerTask {
+    public interface ContainerTask {
 
         /**
          * Run.
          *
-         * @throws Exception the exception
+         * @throws Exception
+         *     the exception
          */
         void run() throws Exception; //NOSONAR
 
     }
 
-    private synchronized void deployApplication(URI uri,
-        Boolean lazyInitializationEnabled,
-        Boolean xmlValidationsEnabled,
-        Boolean lazyConnectionsEnabled) {
-        LOGGER.info("Deploying Mule application {} with lazyInitializationEnabled={}, xmlValidationsEnabled={}, "
-                + "lazyConnectionsEnabled={}" + " ...", uri.getPath(),
-            Optional.ofNullable(lazyInitializationEnabled).orElse(configProperties.isLazyInitializationEnabled()),
-            Optional.ofNullable(xmlValidationsEnabled).orElse(configProperties.isXmlValidationsEnabled()),
-            Optional.ofNullable(lazyConnectionsEnabled).orElse(configProperties.isLazyConnectionsEnabled()));
-        deployArtifact(deploymentProperties -> muleContainer.getDeploymentService().deploy(uri, deploymentProperties),
-            lazyInitializationEnabled, xmlValidationsEnabled, lazyConnectionsEnabled);
-    }
-
-    private synchronized void deployDomain(URI uri,
-        Boolean lazyInitializationEnabled,
-        Boolean xmlValidationsEnabled,
-        Boolean lazyConnectionsEnabled) {
-        LOGGER.info("Deploying Mule domain {} with lazyInitializationEnabled={}, xmlValidationsEnabled={}, "
-                + "lazyConnectionsEnabled={}" + " ...", uri.getPath(),
-            Optional.ofNullable(lazyInitializationEnabled).orElse(configProperties.isLazyInitializationEnabled()),
-            Optional.ofNullable(xmlValidationsEnabled).orElse(configProperties.isXmlValidationsEnabled()),
-            Optional.ofNullable(lazyConnectionsEnabled).orElse(configProperties.isLazyConnectionsEnabled()));
-        deployArtifact(
-            deploymentProperties -> muleContainer.getDeploymentService().deployDomain(uri, deploymentProperties),
-            lazyInitializationEnabled, xmlValidationsEnabled, lazyConnectionsEnabled);
-    }
-
-    protected synchronized void start() {
+    /**
+     * Start.
+     */
+    @Override
+    public synchronized void start() {
         try {
             if (started.getAndSet(true)) {
-                LOGGER.warn("Mule Runtime already started");
+                LOGGER.warn("Mule Runtime already started!");
                 return;
             }
-            LOGGER.info("Starting Mule Runtime ...");
+            LOGGER.info("Starting Mule Runtime [{} {} build {} + Spring Boot {} + Spring Framework {}]...",
+                MuleManifest.getProductName(), MuleManifest.getProductVersion(), MuleManifest.getBuildNumber(),
+                SpringBootVersion.getVersion(), SpringVersion.getVersion());
             setUpEnvironmentAndStart();
             running.set(true);
             LOGGER.info("Mule Runtime is ready");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             stop();
             throw new IllegalStateException("Unable to start Mule Runtime", e);
         }
         // ORDER MATTERS!!
-        // First: deploy domains found on mule.domains property
+        // 1. deploy domains found on mule.domains property
         deployMuleDomains();
-        // Second: deploy applications found on mule.apps property
+        // 2. deploy applications found on mule.apps property
         deployMuleApplications();
     }
 
-    protected synchronized void stop() {
-        running.set(false);
-        started.set(false);
-        if (muleContainer != null) {
-            executeWithinClassLoader(containerClassLoader, () -> {
-                LOGGER.info("Stopping Mule Runtime ...");
-                muleContainer.stop();
-                muleContainer.getContainerClassLoader().dispose();
-            });
+    /**
+     * Stop.
+     */
+    @Override
+    public synchronized void stop() {
+        if (!running.getAndSet(false) && !started.get()) {
+            LOGGER.warn("Mule Runtime already stopped!");
+            return;
+        }
+        try {
+            LOGGER.info("Stopping Mule Runtime ...");
+            disposeMuleContainer(containerClassLoader);
+        } finally {
+            started.set(false);
         }
     }
 
-    protected ClassLoader containerClassLoader() {
+    /**
+     * Container class loader.
+     *
+     * @return the class loader
+     */
+    public ClassLoader containerClassLoader() {
         return containerClassLoader;
     }
 
-    private void checkRunning() {
+    /**
+     * Check running.
+     */
+    protected void checkRunning() {
         if (!running.get()) {
-            throw new IllegalStateException("Unable to process request, Mule Runtime is not running!!");
-        }
-    }
-
-    protected void setEmbeddedMode(MuleContainer muleContainer) {
-        try {
-            //MULE 4.4.0 embedded mode compatibility
-            muleContainer.getClass().getMethod("setEmbeddedMode", boolean.class).invoke(muleContainer, true);
-        }
-        catch (Exception e) {
-            // just ignore it for MULE version < 4.4.0
+            throw new IllegalStateException("Unable to process request, Mule Runtime is not running!");
         }
     }
 
@@ -398,13 +326,15 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             setProperty("log4j2.disable.jmx", "true");
 
             if (configProperties.getBase() == null) {
-                throw new IllegalArgumentException("mule.base must be provided!!");
+                throw new IllegalArgumentException("mule.base must be provided!");
             }
 
             setProperty(MULE_HOME_DIRECTORY_PROPERTY, configProperties.getBase().toURI().getPath());
 
             if (configProperties.isSimpleLog()) {
                 setProperty(MuleSystemProperties.MULE_SIMPLE_LOG, "true");
+            } else {
+                clearProperty(MuleSystemProperties.MULE_SIMPLE_LOG);
             }
             // ensure required folders exist
             getMuleBaseFolder().mkdirs();
@@ -425,8 +355,6 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             // extract Mule server plugins as they must be loaded from local file system (Mule Runtime requirement).
             // We will do it always to allow update Mule runtime version on an existing mule forder.
             installOrUpgradeServerPlugins();
-            muleContainer = new MuleContainer(new String[0]);
-            setEmbeddedMode(muleContainer);
             // Create a composite classloader to avoid loading mule services or patches from container classloader.
             containerClassLoader = new CompositeClassLoader(buildContainerClassloader());
             // Create a high priority patches classloader to ensure those patches take precedence over rest of
@@ -435,11 +363,9 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             if (patchesClassLoader != null) {
                 containerClassLoader = new CompositeClassLoader(patchesClassLoader, containerClassLoader);
             }
-            // Start Mule Runtime container, do not register shutdown hook since it will try to kill the JVM
-            executeWithinClassLoader(containerClassLoader, () -> muleContainer.start(false));
-        }
-        catch (Exception e) {
-            throw new IllegalStateException("Unable to start Mule Runtime container!!", e);
+            initMuleContainer(containerClassLoader);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to start Mule Runtime container!", e);
         }
     }
 
@@ -452,10 +378,10 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
         URLClassLoader springClassLoader = (URLClassLoader)this.getClass().getClassLoader();
         List<URL> services = Stream.of(springClassLoader.getURLs()).filter(u -> {
             if (LOGGER.isTraceEnabled()) {
-                LOGGER
-                    .trace("[installOrUpgradeServices] -> dependency to filter found on classloader {} ", u.getPath());
+                LOGGER.trace("[installOrUpgradeServices] -> dependency to filter found on classloader {} ",
+                    u.getPath());
             }
-            return u.getFile().replaceAll(WITHIN_JAR_REGEX, "").endsWith("-mule-service.jar");
+            return u.getFile().replace(WITHIN_JAR, "").endsWith("-mule-service.jar");
         }).collect(Collectors.toList());
 
         // extract Mule services as they must be loaded from local file system (Mule Runtime requirement).
@@ -465,7 +391,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
                 LOGGER.debug("Installing Mule service {} ...", url.getPath());
             }
             File destinationFile = new File(getServicesFolder(),
-                getName(url.getFile().replaceAll("-mule-service\\.jar", "").replaceAll(WITHIN_JAR_REGEX, "")));
+                getName(url.getFile().replace("-mule-service.jar", "").replace(WITHIN_JAR, "")));
             destinationFile.mkdirs();
             StorageUtils.unzip(url.openStream(), destinationFile);
         }
@@ -481,13 +407,15 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
         // We will do it always to allow update Mule runtime version on an existing mule forder.
         if (configProperties.getServerPlugins() != null) {
             for (Resource res : configProperties.getServerPlugins()) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Installing Mule server plugin {} ...", res.getURI());
+                String fileName = res.getFilename();
+                if (fileName != null) {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Installing Mule server plugin {} ...", res.getURI());
+                    }
+                    File destinationFile = new File(getServerPluginsFolder(), getName(fileName.replace(".zip", "")));
+                    destinationFile.mkdirs();
+                    StorageUtils.unzip(res.getInputStream(), destinationFile);
                 }
-                File destinationFile = new File(getServerPluginsFolder(),
-                    getName(res.getFilename().replace(".zip", "")));
-                destinationFile.mkdirs();
-                StorageUtils.unzip(res.getInputStream(), destinationFile);
             }
         }
     }
@@ -504,14 +432,19 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             patchNames.addAll(configProperties.getPatches());
         }
         URLClassLoader springClassLoader = (URLClassLoader)this.getClass().getClassLoader();
+        String[] patchesPrefix = Optional.ofNullable(configProperties.getPatchesPrefix())
+                                     .orElse(Collections.emptyList()).stream().toArray(String[]::new);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("[patchesPrefix] -> patches prefix {} ", Arrays.toString(patchesPrefix));
+        }
         URL[] patches = Stream.of(springClassLoader.getURLs()).filter(u -> {
-            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
+            String depName = getName(u.getFile().replace(WITHIN_JAR, "").replace(JAR_EXTENSION, ""));
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("[getPatchesClassloader] -> dependency name to filter found on classloader {} ", depName);
             }
-            if (configProperties.isAutoLoadPatches() && (depName.startsWith("MULE-") || depName.startsWith("SE-"))) {
+            if (configProperties.isAutoLoadPatches() && StringUtils.startsWithAny(depName, patchesPrefix)) {
                 LOGGER.info(
-                    "{} dependency seems to be a MULE PATCH. Will be auto-loaded into high priority class loader!",
+                    "{} dependency seems to be a MULE PATCH. Will be auto-loaded into high priority class loader",
                     depName);
                 patchNames.remove(depName);
                 return true;
@@ -519,8 +452,8 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             return patchNames.remove(depName);
         }).sorted((a, b) -> {
             if (!emptyPatches) {
-                String aName = getName(a.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
-                String bName = getName(b.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
+                String aName = getName(a.getFile().replace(WITHIN_JAR, "").replace(JAR_EXTENSION, ""));
+                String bName = getName(b.getFile().replace(WITHIN_JAR, "").replace(JAR_EXTENSION, ""));
                 // sorting based on provided ordered list of patches
                 int aIndex = configProperties.getPatches().indexOf(aName);
                 int bIndex = configProperties.getPatches().indexOf(bName);
@@ -532,7 +465,7 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
         // warn not found provided patches
         for (String u : patchNames) {
             LOGGER.warn("Provided patch name {} was not found on classloader. Consider to remove it from provided 'mule"
-                + ".paches' property", u);
+                            + ".paches' property", u);
         }
         if (patches.length == 0) {
             return null;
@@ -544,38 +477,76 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
     }
 
     private ClassLoader buildContainerClassloader() {
+        // original class loader
         URLClassLoader springClassLoader = (URLClassLoader)this.getClass().getClassLoader();
+
+        String[] patchesPrefix = Optional.ofNullable(configProperties.getPatchesPrefix())
+                                     .orElse(Collections.emptyList()).stream().toArray(String[]::new);
+
         URL[] libs = Stream.of(springClassLoader.getURLs()).filter(u -> {
-            String depName = getName(u.getFile().replaceAll(WITHIN_JAR_REGEX, "").replaceAll(JAR_EXTENSION, ""));
-            // remove provided MULE patches/libs from classloader
-            if (!CollectionUtils.isEmpty(configProperties.getPatches()) && configProperties.getPatches().stream()
-                .anyMatch(
-                    p -> p.trim().equals(depName))) {
+            String depName = getName(u.getFile().replace(WITHIN_JAR, "").replace(JAR_EXTENSION, ""));
+            if (
+                // remove provided MULE patches/libs from classloader
+                (!CollectionUtils.isEmpty(configProperties.getPatches()) && configProperties.getPatches().stream()
+                                                                                .anyMatch(
+                                                                                    p -> p.trim().equals(depName)))
+                    // Services must be loaded from local file system by Mule Runtime (Mule Runtime requirement)
+                    || depName.endsWith(MULE_SERVICE_SUFFIX)) {
                 return false;
             }
-            // Services must be loaded from local file system by Mule Runtime (Mule Runtime requirement)
-            if (depName.endsWith("-mule-service")) {
+            // remove Mule Domains from classpath whether present, must be loaded as resource
+            if (depName.endsWith(MULE_DOMAIN_SUFFIX)) {
+                LOGGER.error(ALERT_MESSAGE_ARTIFACT_WITHIN_CLASSPATH, getName(u.getFile().replace(WITHIN_JAR, "")),
+                    "domain");
+                return false;
+            }
+            // remove Mule Applications from classpath whether present, must be loaded as resource
+            if (depName.endsWith(MULE_APPLICATION_SUFFIX)) {
+                LOGGER.error(ALERT_MESSAGE_ARTIFACT_WITHIN_CLASSPATH, getName(u.getFile().replace(WITHIN_JAR, "")),
+                    "application");
                 return false;
             }
             // remove auto-loaded MULE patches from container classloader
-            if (depName.startsWith("MULE-") || depName.startsWith("SE-")) {
+            if (StringUtils.startsWithAny(depName, patchesPrefix)) {
                 if (configProperties.isAutoLoadPatches()) {
                     // will be auto-loaded into high priority class loader
                     return false;
                 }
-                else {
-                    LOGGER.warn("{} seems to be a MULE PATCH. Consider to enable auto-load patches ('mule"
-                            + ".autoLoadPatches=true') or to add this patch name to 'mule"
-                            + ".patches' property in order to load it into high priority classloader!",
-                        depName);
-                }
+                LOGGER.warn(ALERT_MESSAGE_PATCH_WITHIN_CLASSPATH, depName);
             }
             return true;
         }).toArray(URL[]::new);
-        return new URLClassLoader(libs);
+
+        // filtered class loader
+        CompositeClassLoader allowedLibsClassLoader = new CompositeClassLoader(new URLClassLoader(libs));
+
+        return new CompositeClassLoader(springClassLoader, new DefaultStrategy(
+            // class exists on filtered class loader
+            s -> {
+                try {
+                    allowedLibsClassLoader.loadClass(s);
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+            }, s -> false,
+            // resource exists on filtered class loader
+            s -> allowedLibsClassLoader.getResource(s) != null, s -> false));
     }
 
-    protected synchronized void deployArtifact(DeploymentTask deploymentTask,
+    /**
+     * Deploy artifact.
+     *
+     * @param deploymentTask
+     *     the deployment task
+     * @param lazyInitializationEnabled
+     *     the lazy initialization enabled
+     * @param xmlValidationsEnabled
+     *     the xml validations enabled
+     * @param lazyConnectionsEnabled
+     *     the lazy connections enabled
+     */
+    public synchronized void deployArtifact(DeploymentTask deploymentTask,
         Boolean lazyInitializationEnabled,
         Boolean xmlValidationsEnabled,
         Boolean lazyConnectionsEnabled) {
@@ -590,82 +561,140 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
                 Optional.ofNullable(lazyConnectionsEnabled).orElse(configProperties.isLazyConnectionsEnabled())));
             // deploy artifact
             deploymentTask.deploy(deploymentProperties);
-        }
-        catch (Exception e) {
-            throw new DeployArtifactException("Unable to deploy actifact!", e);
+        } catch (Exception e) {
+            throw new DeployArtifactException("Unable to deploy actifact", e);
         }
     }
 
-    protected void executeWithinClassLoader(ClassLoader cl, ContainerTask runnable) {
+    /**
+     * Execute within class loader.
+     *
+     * @param cl
+     *     the cl
+     * @param runnable
+     *     the runnable
+     */
+    public void executeWithinClassLoader(ClassLoader cl, ContainerTask runnable) {
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(cl);
             runnable.run();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IllegalStateException(e);
-        }
-        finally {
+        } finally {
             Thread.currentThread().setContextClassLoader(contextClassLoader);
         }
     }
 
     private void deployMuleApplications() {
         try {
-            if (configProperties.getApps() != null) {
-                for (Resource res : configProperties.getApps()) {
-                    File f = res.isFile()
-                        ? res.getFile()
-                        : StorageUtils.storeArtifactTemp(res.getFilename(), res.getInputStream());
-                    if (!isDeployed(getAppsFolder(), f)) {
-                        deployApplication(f, null, null, null);
+            // Find mule applications within resources classpath
+            final Set<Resource> artifacts = Optional.ofNullable(configProperties.getApps()).orElse(new HashSet<>());
+
+            PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver(
+                this.getClass().getClassLoader());
+
+            Stream.of(resourcePatternResolver.getResources("classpath*:**/*" + MULE_APPLICATION_SUFFIX + JAR_EXTENSION))
+                .forEach(r -> {
+                    if (artifacts.stream().noneMatch(a -> getName(a.getFilename()).equals(getName(r.getFilename())))) {
+                        if (configProperties.isAutoDeployArtifacts()) {
+                            LOGGER.info("{} within resources classpath seems to be a MULE application and it will be "
+                                            + "auto-deployed", getName(r.getFilename()));
+                            // add to apps to be auto-deployed
+                            artifacts.add(r);
+                        } else {
+                            LOGGER.warn(
+                                "{} within resources classpath seems to be a MULE application but it will not be "
+                                    + "auto-deployed. Consider to enable auto-deploy mule artifacts ('mule"
+                                    + ".autoDeployArtifacts=true') or to add this file name to 'mule"
+                                    + ".domains' property in order to deploy it!", getName(r.getFilename()));
+                        }
                     }
-                    else {
-                        LOGGER.warn(
-                            "Provided Mule application '{}' already deployed. Set mule.cleanStartup=true to re-deploy"
-                                + " it when Mule starts.", getName(f.getPath()));
-                    }
+                });
+
+            configProperties.setApps(artifacts);
+
+            for (Resource res : configProperties.getApps()) {
+                File f = StorageUtils.storeArtifactTempOrGet(res);
+                if (!isDeployed(getAppsFolder(), f)) {
+                    deployApplication(f, null, null, null);
+                } else {
+                    LOGGER.warn(
+                        "Provided Mule application '{}' already deployed. Set mule.cleanStartup=true to re-deploy"
+                            + " it when Mule starts.", getName(f.getPath()));
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new DeployArtifactException("Unable to deploy mule applications at startup!", e);
         }
     }
 
     private void deployMuleDomains() {
         try {
-            if (configProperties.getDomains() != null) {
-                for (Resource res : configProperties.getDomains()) {
-                    File f = res.isFile()
-                        ? res.getFile()
-                        : StorageUtils.storeArtifactTemp(res.getFilename(), res.getInputStream());
-                    if (!isDeployed(getDomainsFolder(), f)) {
-                        deployDomain(f, null, null, null);
+            // Find mule domains within resources classpath
+            final Set<Resource> artifacts = Optional.ofNullable(configProperties.getDomains()).orElse(new HashSet<>());
+
+            PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver(
+                this.getClass().getClassLoader());
+
+            Stream.of(resourcePatternResolver.getResources("classpath*:**/*" + MULE_DOMAIN_SUFFIX + JAR_EXTENSION))
+                .forEach(r -> {
+                    if (artifacts.stream().noneMatch(a -> getName(a.getFilename()).equals(getName(r.getFilename())))) {
+                        if (configProperties.isAutoDeployArtifacts()) {
+                            LOGGER.info(
+                                "{} within resources classpath seems to be a MULE domain and it will be auto-deployed",
+                                getName(r.getFilename()));
+                            // add to domains to be auto-deployed
+                            artifacts.add(r);
+                        } else {
+                            LOGGER.warn("{} within resources classpath seems to be a MULE domain but it will not be "
+                                            + "auto-deployed. Consider to enable auto-deploy mule artifacts ('mule"
+                                            + ".autoDeployArtifacts=true') or to add this file name to 'mule"
+                                            + ".domains' property in order to deploy it!", getName(r.getFilename()));
+                        }
                     }
-                    else {
-                        LOGGER.warn(
-                            "Provided Mule domain '{}' already deployed. Set mule.cleanStartup=true to re-deploy"
-                                + " it when Mule starts.", getName(f.getPath()));
-                    }
+                });
+
+            configProperties.setDomains(artifacts);
+
+            for (Resource res : configProperties.getDomains()) {
+                File f = StorageUtils.storeArtifactTempOrGet(res);
+                if (!isDeployed(getDomainsFolder(), f)) {
+                    deployDomain(f, null, null, null);
+                } else {
+                    LOGGER.warn("Provided Mule domain '{}' already deployed. Set mule.cleanStartup=true to re-deploy"
+                                    + " it when Mule starts.", getName(f.getPath()));
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new DeployArtifactException("Unable to deploy mule domains at startup!", e);
         }
     }
 
     private boolean isDeployed(File artifactDeploymentFolder, File artifactFile) {
-        return new File(artifactDeploymentFolder, artifactFile.getName().replace(".jar", "") + ARTIFACT_ANCHOR_SUFFIX)
-            .exists();
+        return new File(artifactDeploymentFolder,
+            artifactFile.getName().replace(".jar", "") + ARTIFACT_ANCHOR_SUFFIX).exists();
     }
 
     private static File getLogFolder() {
         return new File(getMuleBaseFolder(), LOGS_FORDER);
     }
 
-    protected void registerSpringBootJarHandler(ClassLoader classLoader)
+    /**
+     * Register spring boot jar handler.
+     *
+     * @param classLoader
+     *     the class loader
+     * @throws InvocationTargetException
+     *     the invocation target exception
+     * @throws NoSuchMethodException
+     *     the no such method exception
+     * @throws InstantiationException
+     *     the instantiation exception
+     * @throws IllegalAccessException
+     *     the illegal access exception
+     */
+    public void registerSpringBootJarHandler(ClassLoader classLoader)
         throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         try {
             if (LOGGER.isDebugEnabled()) {
@@ -673,11 +702,10 @@ public class SpringMuleContainerImpl implements SpringMuleContainer {
             }
             // register handlers to access classes/resources within executable spring boot jar
             //@formatter:off
-            MuleUrlStreamHandlerFactory.registerHandler("jar", (URLStreamHandler)ClassUtils.instantiateClass("org.springframework.boot.loader.jar.Handler", null, classLoader));
-            MuleUrlStreamHandlerFactory.registerHandler("file", (URLStreamHandler)ClassUtils.instantiateClass("sun.net.www.protocol.file.Handler", null, classLoader));
+            MuleUrlStreamHandlerFactory.registerHandler(JAR_PROTOCOL, (URLStreamHandler)ClassUtils.instantiateClass(JAR_HANDLER, null, classLoader));
+            MuleUrlStreamHandlerFactory.registerHandler(FILE_PROTOCOL, (URLStreamHandler)ClassUtils.instantiateClass(FILE_HANDLER, null, classLoader));
             //@formatter:on
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             // ignored, not within executable spring boot jar
         }
     }

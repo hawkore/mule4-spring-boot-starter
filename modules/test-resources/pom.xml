@@ -31,11 +31,16 @@ limitations under the License.
 
   <modules>
     <module>artifacts/test-mule-domain</module>
-    <module>artifacts/test-mule-app</module>
     <module>artifacts/test-mule-domain-bad</module>
+    <module>artifacts/test-mule-domain-void</module>
+    <module>artifacts/test-mule-domain-within-classpath</module>
+    <module>artifacts/test-mule-app</module>
     <module>artifacts/test-mule-app-bad</module>
+    <module>artifacts/test-mule-app-void</module>
+    <module>artifacts/test-mule-app-within-classpath</module>
     <module>artifacts/test-patch-mule</module>
     <module>artifacts/test-patch-se</module>
+    <module>artifacts/test-patch-container-v2-mule</module>
   </modules>
 
 </project>

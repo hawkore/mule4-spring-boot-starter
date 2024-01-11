@@ -16,12 +16,12 @@
 package org.hawkore.springframework.boot.mule.config;
 
 import org.hawkore.springframework.boot.mule.container.SpringMuleContainer;
-import org.hawkore.springframework.boot.mule.container.SpringMuleContainerImpl;
 import org.hawkore.springframework.boot.mule.health.MuleRuntimeHealthIndicator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
@@ -32,7 +32,8 @@ import org.springframework.context.annotation.Import;
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
 @Configuration
-@Import({MuleConfigProperties.class, SpringMuleContainerImpl.class})
+@ComponentScan("org.hawkore.springframework.boot.mule.container")
+@Import({MuleConfigProperties.class})
 public class MuleContainerConfiguration {
 
     /**

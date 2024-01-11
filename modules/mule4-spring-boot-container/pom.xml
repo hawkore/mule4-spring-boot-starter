@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <groupId>org.hawkore.springframework.boot</groupId>
     <artifactId>mule4-spring-boot-starter</artifactId>
-    <version>2.0.2</version>
+    <version>3.0.0</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -41,6 +41,12 @@ limitations under the License.
     <gpg.skip>false</gpg.skip>
     <license.file>../../LICENSE</license.file>
     <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/../coverage-report/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    <!-- Default Mule Runtime BOM Version for build and test -->
+    <mule.build.bom.version>4.4.0</mule.build.bom.version>
+    <!-- Default versions for testing. Should match with Mule's one to avoid incompatibilities -->
+    <spring-boot.version>2.1.4.RELEASE</spring-boot.version>
+    <projectReactor.test.version>3.2.12.RELEASE</projectReactor.test.version>
+    <projectReactorExtra.test.version>3.1.6.RELEASE</projectReactorExtra.test.version>
   </properties>
   <build>
     <plugins>
@@ -120,7 +126,39 @@ limitations under the License.
             <include>**/*TestSuite.java</include>
           </includes>
           <useSystemClassLoader>false</useSystemClassLoader>
+          <threadCount>1</threadCount>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>1.5.0</version>
+        <configuration>
+          <flattenMode>defaults</flattenMode>
+          <flattenedPomFilename>pom-installed.xml</flattenedPomFilename>
+          <updatePomFile>true</updatePomFile>
+          <embedBuildProfileDependencies>true</embedBuildProfileDependencies>
+          <pomElements>
+            <url>resolve</url>
+            <name>resolve</name>
+            <description>resolve</description>
+            <scm>resolve</scm>
+            <properties>remove</properties>
+            <dependencies>remove</dependencies>
+            <repositories>remove</repositories>
+            <developers>resolve</developers>
+            <organization>resolve</organization>
+          </pomElements>
+        </configuration>
+        <executions>
+          <execution>
+            <id>flatten.after.package</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

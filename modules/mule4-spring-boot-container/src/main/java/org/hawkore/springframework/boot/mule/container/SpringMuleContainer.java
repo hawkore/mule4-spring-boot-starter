@@ -16,7 +16,7 @@
 package org.hawkore.springframework.boot.mule.container;
 
 import java.io.File;
-import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 
 import org.hawkore.springframework.boot.mule.controller.dto.Application;
@@ -99,6 +99,23 @@ public interface SpringMuleContainer extends ApplicationListener<ApplicationEven
         Boolean lazyConnectionsEnabled);
 
     /**
+     * Deploy application.
+     *
+     * @param appFile
+     *     the app file
+     * @param lazyInitializationEnabled
+     *     the lazy initialization enabled
+     * @param xmlValidationsEnabled
+     *     the xml validations enabled
+     * @param lazyConnectionsEnabled
+     *     the lazy connections enabled
+     */
+    void deployApplication(URI appFile,
+        Boolean lazyInitializationEnabled,
+        Boolean xmlValidationsEnabled,
+        Boolean lazyConnectionsEnabled);
+
+    /**
      * Deploy domain.
      *
      * @param domainFile
@@ -116,24 +133,37 @@ public interface SpringMuleContainer extends ApplicationListener<ApplicationEven
         Boolean lazyConnectionsEnabled);
 
     /**
+     * Deploy domain.
+     *
+     * @param domainFile
+     *     the domain file
+     * @param lazyInitializationEnabled
+     *     the lazy initialization enabled
+     * @param xmlValidationsEnabled
+     *     the xml validations enabled
+     * @param lazyConnectionsEnabled
+     *     the lazy connections enabled
+     */
+    void deployDomain(URI domainFile,
+        Boolean lazyInitializationEnabled,
+        Boolean xmlValidationsEnabled,
+        Boolean lazyConnectionsEnabled);
+
+    /**
      * Undeploy application.
      *
      * @param application
      *     the application
-     * @throws IOException
-     *     the io exception
      */
-    void undeployApplication(String application) throws IOException;
+    void undeployApplication(String application);
 
     /**
      * Undeploy domain.
      *
      * @param domain
      *     the domain
-     * @throws IOException
-     *     the io exception
      */
-    void undeployDomain(String domain) throws IOException;
+    void undeployDomain(String domain);
 
     /**
      * Whether Mule is running.
@@ -141,4 +171,31 @@ public interface SpringMuleContainer extends ApplicationListener<ApplicationEven
      * @return the boolean
      */
     boolean isRunning();
+
+    /**
+     * Stop Mule runtime.
+     */
+    void stop();
+
+    /**
+     * Start Mule runtime.
+     */
+    void start();
+
+    /**
+     * Init Mule container.
+     *
+     * @param classLoader
+     *     the class loader
+     */
+    void initMuleContainer(ClassLoader classLoader);
+
+    /**
+     * Dispose Mule container.
+     *
+     * @param classLoader
+     *     the class loader
+     */
+    void disposeMuleContainer(ClassLoader classLoader);
+
 }
