@@ -8,7 +8,7 @@
   <version>1.0.0</version>
   <packaging>mule-application</packaging>
 
-  <name>Sample Mule Application for testing</name>
+  <name>Sample Mule Application for testing (with errors)</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

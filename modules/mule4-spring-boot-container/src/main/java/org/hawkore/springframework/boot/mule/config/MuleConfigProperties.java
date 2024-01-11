@@ -45,7 +45,7 @@ public class MuleConfigProperties {
     private boolean lazyInitializationEnabled = false;
     private boolean xmlValidationsEnabled = true;
     private boolean lazyConnectionsEnabled = true;
-    /** Enable flag simple log (global) for mule runtime logging. By default true **/
+    /** Enable flag simple log (global log file) for mule runtime logging. By default true **/
     private boolean simpleLog = true;
     /**
      * Remove deployments before start Mule Runtime. By default false.

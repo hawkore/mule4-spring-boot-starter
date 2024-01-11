@@ -35,7 +35,7 @@ public interface ClassLoaderStrategy {
      *     the class name
      * @return class
      */
-    Class findClass(ClassLoader cl, String className);
+    Class<?> findClass(ClassLoader cl, String className);
 
     /**
      * Find resource.

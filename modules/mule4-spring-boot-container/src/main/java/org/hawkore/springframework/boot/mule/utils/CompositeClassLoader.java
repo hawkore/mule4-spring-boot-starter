@@ -148,7 +148,9 @@ public class CompositeClassLoader extends ClassLoader {
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         Class<?> c = strategy.findClass(parent, name);
-        if (c == null) {
+        if (c != null) {
+            return c;
+        } else {
             for (ClassLoader cl : childClassLoaders) {
                 c = strategy.findClass(cl, name);
                 if (c != null) {

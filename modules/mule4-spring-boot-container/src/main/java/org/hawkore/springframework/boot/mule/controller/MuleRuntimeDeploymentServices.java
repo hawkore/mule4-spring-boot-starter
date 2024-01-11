@@ -102,13 +102,13 @@ public class MuleRuntimeDeploymentServices {
         File artifact = null;
         try {
             artifact = StorageUtils.storeArtifactTemp(app);
-            muleContainer
-                .deployApplication(artifact, lazyInitializationEnabled, xmlValidationsEnabled, lazyConnectionsEnabled);
+            muleContainer.deployApplication(artifact, lazyInitializationEnabled, xmlValidationsEnabled,
+                lazyConnectionsEnabled);
             return ResponseEntity.ok(muleContainer.getApplications());
         } catch (Exception e) {
-            LOGGER.error("Error deploying application", e);
+            LOGGER.error("Error deploying application: " + app.getOriginalFilename(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                       .body(new ErrorMessage().setMessage(e.getMessage()));
+                       .body(new ErrorMessage().setMessage(e.getMessage() + ": " + app.getOriginalFilename()));
         }
     }
 
@@ -133,13 +133,13 @@ public class MuleRuntimeDeploymentServices {
         File artifact = null;
         try {
             artifact = StorageUtils.storeArtifactTemp(domain);
-            muleContainer
-                .deployDomain(artifact, lazyInitializationEnabled, xmlValidationsEnabled, lazyConnectionsEnabled);
+            muleContainer.deployDomain(artifact, lazyInitializationEnabled, xmlValidationsEnabled,
+                lazyConnectionsEnabled);
             return ResponseEntity.ok(muleContainer.getDomains());
         } catch (Exception e) {
-            LOGGER.error("Error deploying domain", e);
+            LOGGER.error("Error deploying domain: " + domain.getOriginalFilename(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                       .body(new ErrorMessage().setMessage(e.getMessage()));
+                       .body(new ErrorMessage().setMessage(e.getMessage() + ": " + domain.getOriginalFilename()));
         }
     }
 
@@ -156,7 +156,7 @@ public class MuleRuntimeDeploymentServices {
             muleContainer.undeployApplication(app);
             return ResponseEntity.ok(muleContainer.getApplications());
         } catch (Exception e) {
-            LOGGER.error("Error un-deploying application", e);
+            LOGGER.error("Error un-deploying application: " + app, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                        .body(new ErrorMessage().setMessage(e.getMessage()));
         }
@@ -175,7 +175,7 @@ public class MuleRuntimeDeploymentServices {
             muleContainer.undeployDomain(domain);
             return ResponseEntity.ok(muleContainer.getDomains());
         } catch (Exception e) {
-            LOGGER.error("Error un-deploying domain", e);
+            LOGGER.error("Error un-deploying domain: " + domain, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                        .body(new ErrorMessage().setMessage(e.getMessage()));
         }
