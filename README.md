@@ -53,7 +53,7 @@ This will allow you to build highly productive and easily scalable systems with 
 The main dependency is JDK 8+. Tested with:
  - JDK 8, JDK 9, JDK 10 and JDK 11 on Linux/Mac/Windows
  - Spring Boot `2.1.0+`
- - Mule Runtime `4.2.1`-`4.5.2`
+ - Mule Runtime `4.2.1`-`4.5.3`
   
 #### Dependencies
 
@@ -89,7 +89,7 @@ Check available **Mule Runtime CE BOM** versions at [MuleSoft's public maven rep
 
 Take a look at [spring-boot-mule4-runtime-ce](samples/spring-boot-mule4-runtime-ce/README.md) sample project (Mule Runtime CE 4.5.0).
 
-Take a look at [spring-boot-mule4-runtime-ee](samples/spring-boot-mule4-runtime-ee/README.md) sample project (Mule Runtime EE 4.5.2).
+Take a look at [spring-boot-mule4-runtime-ee](samples/spring-boot-mule4-runtime-ee/README.md) sample project (Mule Runtime EE 4.5.3).
 
 ### Expose deployment services
 Deployment services will allow you to manage Mule artifacts on a running spring-boot embedded Mule 4 Runtime:

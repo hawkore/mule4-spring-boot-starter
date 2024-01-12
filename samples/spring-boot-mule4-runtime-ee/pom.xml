@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.hawkore.springframework.boot</groupId>
   <artifactId>spring-boot-mule4-runtime-ee</artifactId>
-  <version>4.5.2</version>
+  <version>4.5.3</version>
   <packaging>jar</packaging>
 
   <properties>
