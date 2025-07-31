@@ -137,6 +137,7 @@ limitations under the License.
             <configuration>
               <publishingServerId>central</publishingServerId>
               <autoPublish>true</autoPublish>
+              <excludeArtifacts>coverage-report,mule4-spring-boot-starter</excludeArtifacts>
             </configuration>
           </plugin>
         </plugins>
