@@ -17,10 +17,10 @@ package org.hawkore.springframework.boot.mule.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,7 +29,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.hawkore.springframework.boot.mule.exception.DeployArtifactException;
-import org.mule.runtime.core.api.util.FileUtils;
 import org.mule.runtime.core.api.util.compression.InvalidZipFileException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +41,10 @@ import static org.apache.commons.io.IOUtils.copy;
 
 /**
  * Storage utils.
+ * <p>
+ * Provides utility methods for safely handling file storage and ZIP extraction,
+ * ensuring proper validation and avoiding common security risks like path traversal.
+ * <p>
  *
  * @author Manuel Núñez Sánchez (manuel.nunez@hawkore.com)
  */
@@ -52,14 +55,14 @@ public class StorageUtils {
     private StorageUtils() {}
 
     /**
-     * Unzip.
+     * Unzip an archive into the specified directory.
      *
      * @param archive
-     *     the archive
+     *     the ZIP input stream
      * @param directory
-     *     the directory
+     *     the target directory
      * @throws IOException
-     *     the io exception
+     *     if an I/O error occurs
      */
     public static void unzip(InputStream archive, File directory) throws IOException {
 
@@ -71,15 +74,19 @@ public class StorageUtils {
 
                 verifyZipFilePaths(entry);
 
-                File f = FileUtils.newFile(directory, entry.getName());
+                File destFile = new File(directory, entry.getName());
+                String destCanonicalPath = destFile.getCanonicalPath();
+                String targetCanonicalPath = directory.getCanonicalPath();
+
+                if (!destCanonicalPath.startsWith(targetCanonicalPath + File.separator)) {
+                    throw new InvalidZipFileException("Entry is outside the target dir: " + entry.getName());
+                }
 
                 if (entry.isDirectory()) {
-                    ensureDirectoryExists(f);
+                    ensureDirectoryExists(destFile);
                 } else {
-                    File file = new File(directory, entry.getName());
-                    // ensure parent directory exists
-                    ensureDirectoryExists(file.getParentFile());
-                    try (OutputStream os = new BufferedOutputStream(new FileOutputStream(f))) {
+                    ensureDirectoryExists(destFile.getParentFile());
+                    try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(destFile.toPath()))) {
                         copy(zip, os);
                     }
                 }
@@ -88,62 +95,56 @@ public class StorageUtils {
     }
 
     /**
-     * Verify zip file paths.
+     * Verify zip file paths for potential path traversal attacks.
      *
      * @param entry
-     *     the entry
+     *     the ZIP entry
      * @throws InvalidZipFileException
-     *     the invalid zip file exception
+     *     if the path is absolute or attempts to escape the target directory
      */
-    /* checks ZipEntry security */
     static void verifyZipFilePaths(ZipEntry entry) throws InvalidZipFileException {
-        Path namePath = Paths.get(entry.getName());
-        if (namePath.getRoot() != null) {
-            // According to .ZIP File Format Specification (Section 4.4.17), the path can not be absolute
-            throw new InvalidZipFileException("Absolute paths are not allowed: " + namePath.toString());
-        } else if (namePath.normalize().toString().startsWith("..")) {
-            // Not specified, but presents a security risk (allows overwriting external files)
-            throw new InvalidZipFileException("External paths are not allowed: " + namePath.toString());
+        Path namePath = Paths.get(entry.getName()).normalize();
+
+        if (namePath.isAbsolute() || namePath.startsWith("..") || entry.getName().contains("..")) {
+            throw new InvalidZipFileException("Invalid ZIP entry: " + entry.getName());
         }
     }
 
     /**
-     * Ensure directory exists.
+     * Ensure a directory exists, creating it if necessary.
      *
      * @param directory
      *     the directory
      * @throws IOException
-     *     the io exception
+     *     if the directory does not exist and cannot be created
      */
     static void ensureDirectoryExists(File directory) throws IOException {
         if (directory.exists()) {
             if (!directory.isDirectory()) {
-                throw new IOException("Provided directory is not a directory: " + directory);
+                throw new IOException("Provided path is not a directory: " + directory);
             }
-        } else {
-            if (!directory.mkdirs()) {
-                throw new IOException("Could not create directory: " + directory);
-            }
+        } else if (!directory.mkdirs()) {
+            throw new IOException("Failed to create directory: " + directory);
         }
     }
 
     /**
-     * Save artifact as a temporal file.
+     * Save artifact as a temporary file.
      *
      * @param file
-     *     the file
-     * @return the file
+     *     the multipart file
+     * @return the stored file
      */
     public static File storeArtifactTemp(MultipartFile file) {
-        try {
-            return storeArtifactTemp(file.getOriginalFilename(), file.getInputStream());
+        try (InputStream inputStream = file.getInputStream()) {
+            return storeArtifactTemp(file.getOriginalFilename(), inputStream);
         } catch (Exception ex) {
             throw new DeployArtifactException("Could not store mule artifact. Please try again!", ex);
         }
     }
 
     /**
-     * Save artifact as a temporal file or return underline file.
+     * Save artifact as a temporary file or return underlying file if already on disk.
      *
      * @param resource
      *     the resource
@@ -158,55 +159,60 @@ public class StorageUtils {
                 }
                 return resource.getFile();
             }
-            return storeArtifactTemp(resource.getFilename(), resource.getInputStream());
+            try (InputStream inputStream = resource.getInputStream()) {
+                return storeArtifactTemp(resource.getFilename(), inputStream);
+            }
         } catch (Exception ex) {
             throw new DeployArtifactException("Could not store mule artifact. Please try again!", ex);
         }
     }
 
     /**
-     * Save artifact as a temporal file.
+     * Save artifact as a temporary file.
      *
      * @param name
-     *     the name
+     *     the file name
      * @param inputStream
-     *     the input stream
-     * @return the file
+     *     the input stream of the file
+     * @return the stored file
      */
     public static File storeArtifactTemp(String name, InputStream inputStream) {
         String fileName = StringUtils.cleanPath(name);
-        if (StringUtils.isEmpty(fileName)) {
-            throw new DeployArtifactException("You must provide a valid artifact file name. Please try again!");
+
+        if (!StringUtils.hasText(fileName) || fileName.contains("..")) {
+            throw new DeployArtifactException("You must provide a valid and safe artifact file name: " + fileName);
         }
+
         try {
-            // security check to avoid override system files
-            if (fileName.contains("..")) {
-                throw new DeployArtifactException("Artifact file name contains invalid characters " + fileName);
-            }
-            // store on temporal directory
             Path tempPath = Files.createTempDirectory("mule_artifact");
             File aFile = new File(tempPath.toFile(), fileName);
             Files.copy(inputStream, aFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Created temporal file for '{}' at {}", fileName, aFile.getAbsolutePath());
             }
+
             return aFile;
+        } catch (FileAlreadyExistsException fae) {
+            throw new DeployArtifactException("File already exists: " + fileName, fae);
         } catch (Exception ex) {
             throw new DeployArtifactException("Could not store artifact file " + fileName + ". Please try again!", ex);
         }
     }
 
     /**
-     * Clean up folder.
+     * Clean up folder by deleting its contents.
      *
      * @param folder
-     *     the folder
+     *     the folder to delete
      */
     public static void cleanUpFolder(File folder) {
         try {
-            deleteDirectory(folder);
+            if (folder != null && folder.exists()) {
+                deleteDirectory(folder);
+            }
         } catch (Exception e) {
-            LOGGER.warn("Unable to full cleanUpFolder. Error was: {}", e.getMessage());
+            LOGGER.warn("Unable to fully clean up folder. Error: {}", e.getMessage(), e);
         }
     }
 
