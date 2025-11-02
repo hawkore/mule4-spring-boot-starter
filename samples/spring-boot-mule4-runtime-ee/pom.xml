@@ -28,7 +28,7 @@
     <spring-boot.version>2.7.12</spring-boot.version>
     <projectReactorVersion>3.4.22</projectReactorVersion>
     <projectReactorExtraVersion>3.4.8</projectReactorExtraVersion>
-    <hazelcast.version>5.2.4</hazelcast.version>
+    <hazelcast.version>5.3.5</hazelcast.version>
 
     <muleProductExt></muleProductExt>
   </properties>
